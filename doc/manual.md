@@ -209,7 +209,7 @@ dim KERNEL sha256:2ce2bc5d65e112ba691c6ab46d622fac1b7dbe45b77106631120dcc5441a3b
 | measure_schedule     | 度量完一个进程/模块后调度的时间，单位毫秒，设置为0代表不调度 | 0-1000                   | 0      |
 | measure_interval     | 自动度量周期，单位分钟，设置为0代表不设置自动度量            | 0-525600                 | 0      |
 | measure_hash         | 度量哈希算法                                                 | sha256, sm3              | sha256 |
-| measure_pcr          | 将度量结果扩展至TPM芯片的PCR寄存器，设置为0代表不扩展        | 0-128                    | 0      |
+| measure_pcr          | 将度量结果扩展至TPM芯片的PCR寄存器，设置为0代表不扩展（注意需要与芯片实际的PCR编号保持一致） | 0-128                    | 0      |
 | signature            | 是否启用策略文件和签名机制，设置为0不启用，设置为1代表启用   | 0, 1                     | 0      |
 
 **使用示例**：
@@ -276,7 +276,7 @@ modprobe dim_monitor measure_log_capacity=10000 measure_hash=sm3
 
 ##### 1.3.5.1 dim_gen_baseline命令行接口
 
-   
+   详见：https://gitee.com/HuaxinLuGitee/dim_tools/blob/master/doc/cmd.md
 
 ## 3 如何使用
 
@@ -617,7 +617,7 @@ insmod /opt/dim/demo/dim_test_module.ko
 # cp dim.der /etc/keys/x509_dim.der
 ```
 
-**步骤2**：对策略文件和静态基线文件进行签名，签名文件必须为原文件直接添加.sig后缀：
+**步骤2**：对策略文件和静态基线文件进行签名，签名文件必须为原文件名直接添加.sig后缀：
 
 ```
 # openssl dgst -sha256 -out /etc/dim/policy.sig -sign dim.key /etc/dim/policy
@@ -634,7 +634,7 @@ modprobe dim_core signature=1
 
 ```
 # echo "" >> /etc/dim/policy
-#echo 1 > /sys/kernel/security/dim/baseline_init
+# echo 1 > /sys/kernel/security/dim/baseline_init
 -bash: echo: write error: Key was rejected by service
 ```
 
