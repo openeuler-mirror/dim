@@ -1,15 +1,15 @@
-# dim_kernel
+# DIM
 
 ## 1 概述
 DIM（Dynamic Integrity Measurement）动态完整性度量特性能够检测到运行态的篡改和注入等攻击引起的内存代码段变化，通过对内存代码段数据进行度量，确定运行态代码是否被篡改，从而发现攻击行为，并采取应对措施。
 
-DIM包含两个软件包dim_tools和dim_kernel，分别提供如下组件：
+DIM包含两个软件包dim_tools和dim，分别提供如下组件：
 
-| 软件包     | 组件             | 说明                                                         |
-| ---------- | ---------------- | ------------------------------------------------------------ |
-| dim_tools  | dim_gen_baseline | 用户态组件，静态基线生成工具，通过解析ELF文件生成指定格式的代码段度量基线。详见：https://gitee.com/openeuler/dim_tools |
-| dim_kernel | dim_core         | 内核模块，执行核心的动态度量逻辑，包括策略解析、静态基线解析、动态基线建立、度量执行、度量日志记录、TPM芯片扩展操作等。 |
-|            | dim_monitor      | 内核模块，执行对dim_core的度量保护。                         |
+| 软件包    | 组件             | 说明                                                         |
+| --------- | ---------------- | ------------------------------------------------------------ |
+| dim_tools | dim_gen_baseline | 用户态组件，静态基线生成工具，通过解析ELF文件生成指定格式的代码段度量基线。详见：https://gitee.com/openeuler/dim_tools |
+| dim       | dim_core         | 内核模块，执行核心的动态度量逻辑，包括策略解析、静态基线解析、动态基线建立、度量执行、度量日志记录、TPM芯片扩展操作等。 |
+|           | dim_monitor      | 内核模块，执行对dim_core的度量保护。                         |
 
 ## 2 安装DIM
 ### 2.1 前置条件
@@ -25,7 +25,7 @@ DIM包含两个软件包dim_tools和dim_kernel，分别提供如下组件：
 以openEuler 23.09版本为例：
 
 ```
-yum install -y dim_tools dim_kernel
+yum install -y dim_tools dim
 ```
 
 软件包安装完成后，DIM内核组件不会默认加载，可通过如下命令进行加载和卸载：
@@ -41,11 +41,11 @@ rmmod dim_core
 
 ### 2.2 使用源码进行编译安装
 
-#### 2.2.1 编译安装dim_tools
+#### 2.2.1 编译安装dim_tools软件
 
 详见https://gitee.com/openeuler/dim_tools
 
-#### 2.2.2 编译安装dim_kernel
+#### 2.2.2 编译安装dim软件
 
 **(1) 安装依赖软件包**
 
@@ -63,13 +63,13 @@ rpm -qa kernel-devel
 **(2) 下载源码**
 
 ```
-git clone https://gitee.com/openeuler/dim_kernel.git
+git clone https://gitee.com/openeuler/dim.git
 ```
 
 **(3) 编译源码**
 
 ```
-cd dim_kernel/src/ && make
+cd dim/src/ && make
 ```
 
 **(3) 安装&&卸载**
