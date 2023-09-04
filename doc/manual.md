@@ -69,7 +69,7 @@ DIM包含两个软件包dim_tools和dim_kernel，分别提供如下组件：
 
 整体架构如下图所示：
 
-
+![](pic/architecture.jpg)
 
 - dim_gen_baseline组件用于生成动态度量所需要的基线数据，该基线数据在DIM特性运行时会被导入并作为度量基准值；
 - dim_core组件实现对内存关键数据的度量功能；
