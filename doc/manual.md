@@ -59,13 +59,13 @@ DIM特性通过在程序运行时对内存中的关键数据（如代码段、�
 
 ### 1.4 架构说明
 
-DIM包含两个软件包dim_tools和dim_kernel，分别提供如下组件：
+DIM包含两个软件包dim_tools和dim，分别提供如下组件：
 
-| 软件包     | 组件             | 说明                                                         |
-| ---------- | ---------------- | ------------------------------------------------------------ |
-| dim_tools  | dim_gen_baseline | 用户态组件，静态基线生成工具，通过解析ELF文件生成指定格式的代码段度量基线。 |
-| dim_kernel | dim_core         | 内核模块，执行核心的动态度量逻辑，包括策略解析、静态基线解析、动态基线建立、度量执行、度量日志记录、TPM芯片扩展操作等。 |
-|            | dim_monitor      | 内核模块，执行对dim_core的代码段和关键数据的度量保护。       |
+| 软件包    | 组件             | 说明                                                         |
+| --------- | ---------------- | ------------------------------------------------------------ |
+| dim_tools | dim_gen_baseline | 用户态组件，静态基线生成工具，通过解析ELF文件生成指定格式的代码段度量基线。 |
+| dim       | dim_core         | 内核模块，执行核心的动态度量逻辑，包括策略解析、静态基线解析、动态基线建立、度量执行、度量日志记录、TPM芯片扩展操作等。 |
+|           | dim_monitor      | 内核模块，执行对dim_core的代码段和关键数据的度量保护。       |
 
 整体架构如下图所示：
 
@@ -287,10 +287,10 @@ modprobe dim_monitor measure_log_capacity=10000 measure_hash=sm3
 - OS版本支持：openEuler 23.09以上版本；
 - 内核版本支持：当前支持openEuler kernel 5.10/6.4版本。
 
-**步骤1**：安装dim_tools和dim_kernel软件包，以openEuler 23.09版本为例：
+**步骤1**：安装dim_tools和dim软件包，以openEuler 23.09版本为例：
 
 ```
-# yum install -y dim_tools dim_kernel
+# yum install -y dim_tools dim
 ```
 
 软件包安装完成后，DIM内核组件不会默认加载，可通过如下命令进行加载和卸载：
@@ -314,7 +314,7 @@ dim_monitor            36864  0
 **注意：**
 
 - dim_monitor必须后于dim_core加载，先于dim_core卸载；
-- 也可使用源码编译安装，详见https://gitee.com/openeuler/dim_kernel/README。
+- 也可使用源码编译安装，详见https://gitee.com/openeuler/dim/README。
 
 ### 3.2 度量用户态进程代码段
 
