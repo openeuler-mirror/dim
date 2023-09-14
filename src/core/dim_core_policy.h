@@ -6,7 +6,7 @@
 #define __DIM_CORE_POLICY_H
 
 #define DIM_POLICY_PATH "/etc/dim/policy"
-#define DIM_MAX_POLICY_NUMBER 100000
+#define DIM_POLICY_LINE_MAX 10000
 
 /* policy key */
 #define DIM_POLICY_MEASURE "measure"
