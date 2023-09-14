@@ -83,8 +83,14 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
 			ret = line_parser(line_buf, line_no);
 		}
 
-		if (ret < 0)
+		if (ret < 0) {
+			/*
+			 * if the parser returns -E2BIG, means the line number
+			 * is too large, the excess lines will be ignored.
+			 */
+			ret = (ret == -E2BIG) ? 0 : ret;
 			goto out;
+		}
 
 		line_no++;
 	}

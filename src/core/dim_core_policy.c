@@ -170,6 +170,12 @@ static int policy_parse_line(char* line, int line_no)
 	int key = 0;
 	const char *val = NULL;
 
+	if (line_no > DIM_POLICY_LINE_MAX) {
+		dim_warn("more than %d policy items will be ignored\n",
+			 DIM_POLICY_LINE_MAX);
+		return -E2BIG;
+	}
+
 	if (strlen(line) == 0 || line[0] == '#')
 		return 0; /* ignore blank line and comment */
 

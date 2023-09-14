@@ -57,16 +57,22 @@ static int parse_simple_baseline_line(char* line, int line_no)
 	char *line_str = line;
 	struct dim_digest digest = { 0 };
 
+	if (line_no > DIM_STATIC_BASELINE_LINE_MAX) {
+		dim_warn("more than %d baseline items will be ignored\n",
+			 DIM_STATIC_BASELINE_LINE_MAX);
+		return -E2BIG;
+	}
+
 	if (strlen(line) == 0 || line[0] == '#')
 		return 0; /* ignore blank line and comment */
 
-	if (strlen(line) > DIM_BASELINE_MAX_LEN) {
+	if (strlen(line) > DIM_STATIC_BASELINE_LEN_MAX) {
 		dim_err("overlength item at line %d\n", line_no);
 		return 0; /* ignore baseline parsing failed */
 	}
 
 	if ((p = strsep(&line_str, " ")) == NULL ||
-	    strcmp(p, DIM_BASELINE_PREFIX) != 0) {
+	    strcmp(p, DIM_STATIC_BASELINE_PREFIX) != 0) {
 		dim_warn("invalid baseline prefix at line %d\n", line_no);
 		return 0;
 	}
@@ -167,16 +173,16 @@ int dim_core_static_baseline_load(void)
 		.path = &kpath,
 	};
 
-	ret = kern_path(DIM_BASELINE_ROOT, LOOKUP_DIRECTORY, &kpath);
+	ret = kern_path(DIM_STATIC_BASELINE_ROOT, LOOKUP_DIRECTORY, &kpath);
 	if (ret < 0) {
 		dim_err("fail to get dim baseline root path: %d", ret);
 		return ret;
 	}
 
-	file = filp_open(DIM_BASELINE_ROOT, O_RDONLY | O_DIRECTORY, 0);
+	file = filp_open(DIM_STATIC_BASELINE_ROOT, O_RDONLY | O_DIRECTORY, 0);
 	if (IS_ERR(file)) {
 		ret = PTR_ERR(file);
-		dim_err("fail to open %s: %d\n", DIM_BASELINE_ROOT, ret);
+		dim_err("fail to open %s: %d\n", DIM_STATIC_BASELINE_ROOT, ret);
 		path_put(&kpath);
 		return ret;
 	}
