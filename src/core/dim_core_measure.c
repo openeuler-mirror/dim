@@ -36,7 +36,7 @@ bool tampered_action = false;
 
 /* time (jiffies) to set */
 unsigned long measure_schedule_jiffies = 0;
-static atomic_t measure_interval_jiffies = ATOMIC_INIT(0);
+static unsigned long measure_interval_jiffies = 0;
 
 struct dim_tpm dim_core_tpm = { 0 };
 struct dim_hash dim_core_hash = { 0 };
@@ -52,27 +52,38 @@ long dim_core_interval_get(void)
 	return p;
 }
 
-int dim_core_interval_set(unsigned int p)
+unsigned long dim_core_interval_jiffies_get(void)
 {
-	unsigned long p_jiffies = 0;
-
-	if (p > DIM_INTERVAL_MAX)
-		return -ERANGE;
-
-	p_jiffies = msecs_to_jiffies(p * DIM_MINUTE_TO_MSEC);
-	if (p_jiffies == MAX_JIFFY_OFFSET)
-		return -ERANGE;
+	unsigned long p = 0;
 
 	mutex_lock(&dim_core_interval_lock);
-	measure_interval = p;
-	atomic_set(&measure_interval_jiffies, p_jiffies);
-	if (p_jiffies == 0) {
+	p = measure_interval_jiffies;
+	mutex_unlock(&dim_core_interval_lock);
+	return p;
+}
+
+int dim_core_interval_set(unsigned int min)
+{
+	unsigned long min_jiffies = 0;
+
+	if (min > DIM_INTERVAL_MAX ||
+	    (unsigned long)min * DIM_MINUTE_TO_SEC > MAX_SEC_IN_JIFFIES)
+		return -ERANGE;
+
+	min_jiffies = (min == 0) ? 0 :
+		nsecs_to_jiffies64((unsigned long)min * DIM_MINUTE_TO_NSEC);
+
+	mutex_lock(&dim_core_interval_lock);
+	measure_interval = min;
+	measure_interval_jiffies = min_jiffies;
+	if (measure_interval == 0) {
 		dim_info("cancel dim timed measure work");
 		cancel_delayed_work_sync(&dim_measure_work);
 	} else {
-		dim_info("modify dim measure interval to %u min (jittfies = %lu)",
-			p, p_jiffies);
-		mod_delayed_work(dim_work_queue, &dim_measure_work, p_jiffies);
+		dim_info("modify dim measure interval to %u min "
+			 "(jittfies = 0x%lx)", min, min_jiffies);
+		mod_delayed_work(dim_work_queue, &dim_measure_work,
+				 min_jiffies);
 	}
 
 	mutex_unlock(&dim_core_interval_lock);
@@ -154,7 +165,7 @@ static void dim_worker_work_cb(struct work_struct *work)
 	unsigned long p;
 
 	do_measure();
-	p = atomic_read(&measure_interval_jiffies);
+	p = dim_core_interval_jiffies_get();
 	if (p != 0)
 		queue_delayed_work(dim_work_queue, &dim_measure_work, p);
 }

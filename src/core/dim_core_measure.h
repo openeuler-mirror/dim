@@ -9,7 +9,8 @@
 
 /* max measure interval = 1 year */
 #define DIM_INTERVAL_MAX (365 * 24 * 60)
-#define DIM_MINUTE_TO_MSEC (60 * 1000)
+#define DIM_MINUTE_TO_SEC (60UL)
+#define DIM_MINUTE_TO_NSEC (60UL * 1000 * 1000 * 1000)
 /* max number of kill tasks */
 #define DIM_KILL_TASKS_MAX (1024)
 /* limit of measure parameter */
