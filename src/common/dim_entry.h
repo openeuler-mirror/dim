@@ -49,6 +49,7 @@ static ssize_t sname##_trigger(struct file *file,			\
 }									\
 									\
 static const struct file_operations sname##_ops = {			\
+	.owner = THIS_MODULE,						\
 	.write = sname##_trigger,					\
 	.llseek = generic_file_llseek,					\
 };									\
@@ -99,6 +100,7 @@ static int sname##_open(struct inode *inode, struct file *file)		\
 }									\
 									\
 static const struct file_operations sname##_ops = {			\
+	.owner = THIS_MODULE,						\
 	.open = sname##_open,						\
 	.read = seq_read,						\
 	.llseek = seq_lseek,						\
@@ -129,6 +131,7 @@ static ssize_t sname##_read(struct file *file,				\
 }									\
 									\
 static const struct file_operations sname##_ops = {			\
+	.owner = THIS_MODULE,						\
 	.read = sname##_read,						\
 	.llseek = generic_file_llseek,					\
 };									\
@@ -173,6 +176,7 @@ static ssize_t sname##_write(struct file *file,				\
 }									\
 									\
 static const struct file_operations sname##_ops = {			\
+	.owner = THIS_MODULE,						\
 	.read = sname##_read,						\
 	.write = sname##_write,						\
 	.llseek = generic_file_llseek,					\
