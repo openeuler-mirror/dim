@@ -78,7 +78,7 @@ static int do_calc_kernel_digest(uintptr_t saddr,
 #ifdef JUMP_LABEL_NOP_SIZE
 		cur_addr = jump_code + JUMP_LABEL_NOP_SIZE;
 #else
-		cur_addr = jump_code + 5; // TODO
+		cur_addr = jump_code + DIM_JUMP_LABEL_NOP_SIZE_MAX;
 #endif
 	}
 
