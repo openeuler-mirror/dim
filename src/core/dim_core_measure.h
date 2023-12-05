@@ -17,6 +17,8 @@
 #define MEASURE_LOG_CAP_MAX (UINT_MAX)
 #define MEASURE_LOG_CAP_MIN (100)
 #define MEASURE_SCHEDULE_MAX (1000)
+/* max size of x86 */
+#define DIM_JUMP_LABEL_NOP_SIZE_MAX 5
 
 struct vm_text_area {
 	struct mm_struct *mm;
