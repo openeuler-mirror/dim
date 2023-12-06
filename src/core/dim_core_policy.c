@@ -118,7 +118,7 @@ static int policy_add_path(const char *path, int action)
 
 	apath = dim_absolute_path(path, path_buf, PATH_MAX);
 	if (IS_ERR(apath)) {
-		dim_warn("fail to get absolute path of %s in policy: %ld\n",
+		dim_warn("failed to get absolute path of %s in policy: %ld\n",
 			path, PTR_ERR(apath));
 		kfree(path_buf);
 		return 0;
@@ -200,7 +200,7 @@ static int policy_parse_line(char* line, int line_no)
 	if (obj == DIM_POLICY_OBJ_KERNEL_TEXT) {
 		ret = policy_add_kernel(action);
 		if (ret < 0)
-			dim_err("fail to add measure policy line %d: %d\n",
+			dim_err("failed to add measure policy line %d: %d\n",
 				line_no, ret);
 		return ret;
 	}
@@ -221,7 +221,7 @@ static int policy_parse_line(char* line, int line_no)
 		policy_add_path(val, action) :
 		policy_add_module(val, action);
 	if (ret < 0)
-		dim_err("fail to add measure policy line %d: %d\n",
+		dim_err("failed to add measure policy line %d: %d\n",
 			line_no, ret);
 	return ret;
 }
@@ -237,14 +237,14 @@ int dim_core_policy_load(void)
 
 	ret = dim_read_verify_file(NULL, DIM_POLICY_PATH, &buf);
 	if (ret < 0 || buf == NULL) {
-		dim_err("fail to read policy file: %d\n", ret);
+		dim_err("failed to read policy file: %d\n", ret);
 		return ret;
 	}
 
 	buf_len = ret;
 	ret = dim_parse_line_buf(buf, buf_len, policy_parse_line);
 	if (ret < 0) {
-		dim_err("fail to parse policy: %d\n", ret);
+		dim_err("failed to parse policy: %d\n", ret);
 		dim_core_policy_destroy();
 	}
 

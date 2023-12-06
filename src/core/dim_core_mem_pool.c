@@ -18,7 +18,7 @@ static int dim_mem_pool_expand(unsigned int order)
 
 	pages = alloc_pages(GFP_KERNEL | __GFP_ZERO, order);
 	if (pages == NULL) {
-		dim_err("fail to allocate pages for memory pool\n");
+		dim_err("failed to allocate pages for memory pool\n");
 		return -ENOMEM;
 	}
 
@@ -27,7 +27,7 @@ static int dim_mem_pool_expand(unsigned int order)
 
 	ret = gen_pool_add(dim_pool, pages_addr, size, -1);
 	if (ret < 0) {
-		dim_err("fail to add pages to memory pool: %d\n", ret);
+		dim_err("failed to add pages to memory pool: %d\n", ret);
 		return ret;
 	}
 
@@ -41,7 +41,7 @@ int dim_mem_pool_init(void)
 
 	dim_pool = gen_pool_create(DIM_MIN_ALLOC_ORDER, -1);
 	if (dim_pool == NULL) {
-		dim_err("fail to generate memory pool\n");
+		dim_err("failed to generate memory pool\n");
 		return -ENOMEM;
 	}
 
@@ -72,7 +72,7 @@ void dim_mem_pool_destroy(void)
 		return;
 
 	if (gen_pool_avail(dim_pool) != gen_pool_size(dim_pool)) {
-		dim_err("dim_mem_pool_destroy fail, memory leak detected\n");
+		dim_err("dim_mem_pool_destroy failed, memory leak detected\n");
 		return;
 	}
 
@@ -96,10 +96,10 @@ void *dim_mem_pool_alloc(size_t size)
 	if (data != NULL)
 		goto out;
 
-	dim_devel("gen_pool_alloc fail, try dim_mem_pool_expand\n");
+	dim_devel("gen_pool_alloc failed, try dim_mem_pool_expand\n");
 	ret = dim_mem_pool_expand(DIM_EXPEND_ALLOC_PAGE_ORDER);
 	if (ret < 0) {
-		dim_err("fail to expand memory pool: %d\n", ret);
+		dim_err("failed to expand memory pool: %d\n", ret);
 		return NULL;
 	}
 

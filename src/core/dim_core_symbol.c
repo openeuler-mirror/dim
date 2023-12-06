@@ -23,7 +23,7 @@ int dim_core_kallsyms_init(void)
 
 	dim_kallsyms_lookup_name = dim_get_symbol_lookup_func();
 	if (dim_kallsyms_lookup_name  == NULL) {
-		dim_err("fail to get symbol_lookup_func\n");
+		dim_err("failed to get symbol_lookup_func\n");
 		return -EINVAL;
 	}
 	k->stext = (char *)dim_kallsyms_lookup_name("_stext");

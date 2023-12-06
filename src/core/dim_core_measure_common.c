@@ -15,7 +15,7 @@ int dim_core_add_measure_log(const char *name, struct dim_digest *digest, int fl
 {
 	int ret = dim_measure_log_add(&dim_core_log, name, digest, flag);
 	if (ret < 0 && ret != -EEXIST) {
-		dim_err("fail to add measure log of %s: %d\n", name, ret);
+		dim_err("failed to add measure log of %s: %d\n", name, ret);
 		return ret;
 	}
 

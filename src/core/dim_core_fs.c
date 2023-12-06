@@ -105,7 +105,7 @@ int dim_core_create_fs(void)
 
 	ret = dim_entry_create(&dim_core_dir, NULL);
 	if (ret < 0) {
-		dim_err("fail to create dim dir entry: %d\n", ret);
+		dim_err("failed to create dim dir entry: %d\n", ret);
 		return ret;
 	}
 

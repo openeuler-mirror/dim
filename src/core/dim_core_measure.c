@@ -125,15 +125,15 @@ static void do_measure(void)
 
 	ret = dim_core_measure_task(bi);
 	if (ret < 0)
-		dim_err("fail to measure user process: %d\n", ret);
+		dim_err("failed to measure user process: %d\n", ret);
 
 	ret = dim_core_measure_module(bi);
 	if (ret < 0)
-		dim_err("fail to measure kernel modules: %d\n", ret);
+		dim_err("failed to measure kernel modules: %d\n", ret);
 
 	ret = dim_core_measure_kernel(bi);
 	if (ret < 0)
-		dim_err("fail to measure kernel: %d\n", ret);
+		dim_err("failed to measure kernel: %d\n", ret);
 
 	mutex_unlock(&dim_core_baseline_lock);
 }
@@ -144,14 +144,14 @@ static int do_baseline(void)
 
 	ret = dim_core_policy_load();
 	if (ret < 0) {
-		dim_err("fail to load dim core policy: %d\n", ret);
+		dim_err("failed to load dim core policy: %d\n", ret);
 		return ret;
 	}
 
 	dim_core_baseline_destroy();
 	ret = dim_core_static_baseline_load();
 	if (ret < 0) {
-		dim_err("fail to load dim static baseline: %d\n", ret);
+		dim_err("failed to load dim static baseline: %d\n", ret);
 		dim_core_policy_destroy();
 		return ret;
 	}
@@ -232,7 +232,7 @@ int dim_core_measure_init(const char *alg_name)
 	/* 2. init measure hash algorithm */
 	ret = dim_hash_init(alg_name, &dim_core_hash);
 	if (ret < 0) {
-		dim_err("fail to initialize hash algorithm: %d\n", ret);
+		dim_err("failed to initialize hash algorithm: %d\n", ret);
 		goto err;
 	}
 
@@ -240,20 +240,20 @@ int dim_core_measure_init(const char *alg_name)
 	if (measure_pcr > 0) {
 		ret = dim_tpm_init(&dim_core_tpm, HASH_ALGO_SHA256);
 		if (ret < 0)
-			dim_warn("fail to initialize tpm chip: %d\n", ret);
+			dim_warn("failed to initialize tpm chip: %d\n", ret);
 	}
 
 	/* 4. init measurement status */
 	ret = dim_core_status_init();
 	if (ret < 0) {
-		dim_err("fail to initialize dim status: %d\n", ret);
+		dim_err("failed to initialize dim status: %d\n", ret);
 		goto err;
 	}
 
 	/* 5. init baseline data (static and dynamic) */
 	ret = dim_core_baseline_init();
 	if (ret < 0) {
-		dim_err("fail to initialize dim baseline: %d\n", ret);
+		dim_err("failed to initialize dim baseline: %d\n", ret);
 		goto err;
 	}
 
@@ -262,7 +262,7 @@ int dim_core_measure_init(const char *alg_name)
 					&dim_core_hash, &dim_core_tpm,
 					measure_log_capacity, measure_pcr);
 	if (ret < 0) {
-		dim_err("fail to initialize measure log root: %d\n", ret);
+		dim_err("failed to initialize measure log root: %d\n", ret);
 		goto err;
 	}
 
@@ -271,7 +271,7 @@ int dim_core_measure_init(const char *alg_name)
 	dim_work_queue = create_singlethread_workqueue("dim_core");
 	if (dim_work_queue == NULL) {
 		ret = -ENOMEM;
-		dim_err("fail to create dim work queue: %d\n", ret);
+		dim_err("failed to create dim work queue: %d\n", ret);
 		goto err;
 	}
 	
@@ -279,7 +279,7 @@ int dim_core_measure_init(const char *alg_name)
 	if (measure_interval) {
 		ret = dim_core_measure(1);
 		if (ret < 0) {
-			dim_err("fail to do baseline init: %d\n", ret);
+			dim_err("failed to do baseline init: %d\n", ret);
 			goto err;
 		}
 
