@@ -35,7 +35,7 @@ int dim_core_add_static_baseline(const char *name, int type,
 {
 	int ret = dim_baseline_add(&static_baseline, name, type, digest);
 	if (ret < 0 && ret != -EEXIST) {
-		dim_err("fail to add static baseline of %s\n", name);
+		dim_err("failed to add static baseline of %s\n", name);
 		return ret;
 	}
 
@@ -47,7 +47,7 @@ int dim_core_add_dynamic_baseline(const char *name, int type,
 {
 	int ret = dim_baseline_add(&dynamic_baseline, name, type, digest);
 	if (ret < 0 && ret != -EEXIST) {
-		dim_err("fail to add dynamic baseline of %s\n", name);
+		dim_err("failed to add dynamic baseline of %s\n", name);
 		return ret;
 	}
 
@@ -93,7 +93,7 @@ int dim_core_baseline_init(void)
 				     dim_kfree,
 				     &static_baseline);
 	if (ret < 0) {
-		dim_err("fail to initialize static baseline root: %d\n", ret);
+		dim_err("failed to initialize static baseline root: %d\n", ret);
 		return ret;
 	}
 
@@ -101,7 +101,7 @@ int dim_core_baseline_init(void)
 				     dim_mem_pool_free,
 				     &dynamic_baseline);
 	if (ret < 0) {
-		dim_err("fail to initialize dynamic baseline root: %d\n", ret);
+		dim_err("failed to initialize dynamic baseline root: %d\n", ret);
 		return ret;
 	}
 

@@ -192,7 +192,7 @@ static bool vm_file_match_policy(struct file *vm_file,
 	/* get the module path string */
 	ctx->path = d_path(&vm_file->f_path, ctx->path_buf, PATH_MAX);
 	if (IS_ERR(ctx->path)) {
-		dim_warn("fail to get path of vma: %ld\n", PTR_ERR(ctx->path));
+		dim_warn("failed to get path of vma: %ld\n", PTR_ERR(ctx->path));
 		ctx->path = NULL;
 		return false;
 	}
@@ -225,7 +225,7 @@ static int update_vma_digest(struct vm_area_struct *vma_start,
 	ret_pages = get_user_pages_remote(vma_start->vm_mm, addr_start, nr_pages,
 					  0, pages, NULL, NULL);
 	if (ret_pages < 0) {
-		dim_err("fail to get vma pages: %ld\n", ret_pages);
+		dim_err("failed to get vma pages: %ld\n", ret_pages);
 		vfree(pages);
 		return ret_pages;
 	}
@@ -233,7 +233,7 @@ static int update_vma_digest(struct vm_area_struct *vma_start,
 	for (i = 0; i < ret_pages; i++) {
 		page_ptr = kmap(pages[i]);
 		if (page_ptr == NULL) {
-			dim_err("fail to kmap page\n");
+			dim_err("failed to kmap page\n");
 			put_page(pages[i]);
 			continue;
 		}
@@ -257,7 +257,7 @@ static int check_user_digest(struct dim_digest *digest,
 	ret = dim_core_check_user_digest(ctx->baseline, ctx->path,
 					 digest, &log_flag);
 	if (ret < 0) {
-		dim_err("fail to check user digest: %d\n", ret);
+		dim_err("failed to check user digest: %d\n", ret);
 		return ret;
 	}
 
@@ -315,7 +315,7 @@ static int measure_task_module_anon_text(struct vm_area_struct *vma,
 
 		ret = measure_anon_text_vma(v, ctx);
 		if (ret < 0)
-			dim_err("fail to measure anon text vma: %d\n", ret);
+			dim_err("failed to measure anon text vma: %d\n", ret);
 	}
 
 	return 0;
@@ -367,11 +367,11 @@ static void measure_task_module(struct vm_area_struct *vma,
 
 	ret = measure_task_module_file_text(vma, ctx);
 	if (ret < 0)
-		dim_err("fail to measure module file text: %d", ret);
+		dim_err("failed to measure module file text: %d", ret);
 #ifdef DIM_CORE_MEASURE_ANON_TEXT
 	ret = measure_task_module_anon_text(vma, ctx);
 	if (ret < 0)
-		dim_err("fail to measure module anon text: %d", ret);
+		dim_err("failed to measure module anon text: %d", ret);
 #endif
 }
 
@@ -425,7 +425,7 @@ out:
 	if (ctx->task_kill) {
 		ret = kill_task_tree(task);
 		if (ret < 0)
-			dim_err("fail to kill tampered task, pid = %d: %d\n",
+			dim_err("failed to kill tampered task, pid = %d: %d\n",
 			       task->pid, ret);
 	}
 
@@ -446,7 +446,7 @@ static int store_task_pids(pid_t **pid_buf, unsigned int *pid_cnt)
 	/* maximum processing of PID_MAX_DEFAULT * 2 pids */
 	buf = vmalloc(max_cnt);
 	if (buf == NULL) {
-		dim_err("fail to allocate memory for pid buffer\n");
+		dim_err("failed to allocate memory for pid buffer\n");
 		return -ENOMEM;
 	}
 
@@ -494,7 +494,7 @@ static int walk_tasks(task_measurer f, struct task_measure_ctx *ctx)
 		ret = f(task, ctx);
 		put_task_struct(task);
 		if (ret < 0) {
-			dim_err("fail to measure task, pid = %d: %d", pid_buf[i], ret);
+			dim_err("failed to measure task, pid = %d: %d", pid_buf[i], ret);
 			if (ret == -EINTR)
 				break;
 		}

@@ -112,7 +112,7 @@ static int parse_simple_baseline_line(char* line, int line_no)
 
 	ret = dim_core_add_static_baseline(line_str, type, &digest);
 	if (ret < 0)
-		dim_warn("fail to add static baseline at line %d: %d\n",
+		dim_warn("failed to add static baseline at line %d: %d\n",
 			 line_no, ret);
 	return 0;
 }
@@ -144,14 +144,14 @@ static_baseline_load(struct dir_context *__ctx,
 
 	ret = dim_read_verify_file(ctx->path, name, &buf);
 	if (ret < 0 || buf == NULL) {
-		dim_err("fail to read and verify %s: %d\n", name, ret);
+		dim_err("failed to read and verify %s: %d\n", name, ret);
 		goto out;
 	}
 
 	buf_len = ret;
 	ret = dim_parse_line_buf(buf, buf_len, parse_simple_baseline_line);
 	if (ret < 0)
-		dim_err("fail to parse baseline file %s: %d\n", name, ret);
+		dim_err("failed to parse baseline file %s: %d\n", name, ret);
 out:
 	if (buf != NULL)
 		vfree(buf);
@@ -175,14 +175,14 @@ int dim_core_static_baseline_load(void)
 
 	ret = kern_path(DIM_STATIC_BASELINE_ROOT, LOOKUP_DIRECTORY, &kpath);
 	if (ret < 0) {
-		dim_err("fail to get dim baseline root path: %d", ret);
+		dim_err("failed to get dim baseline root path: %d", ret);
 		return ret;
 	}
 
 	file = filp_open(DIM_STATIC_BASELINE_ROOT, O_RDONLY | O_DIRECTORY, 0);
 	if (IS_ERR(file)) {
 		ret = PTR_ERR(file);
-		dim_err("fail to open %s: %d\n", DIM_STATIC_BASELINE_ROOT, ret);
+		dim_err("failed to open %s: %d\n", DIM_STATIC_BASELINE_ROOT, ret);
 		path_put(&kpath);
 		return ret;
 	}

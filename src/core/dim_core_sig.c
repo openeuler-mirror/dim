@@ -141,7 +141,7 @@ int dim_core_sig_init(void)
 					 KEY_ALLOC_NOT_IN_QUOTA, NULL, NULL);
 	if (IS_ERR(dim_core_keyring)) {
 		ret = PTR_ERR(dim_core_keyring);
-		dim_err("fail to allocate DIM keyring: %ld\n", ret);
+		dim_err("failed to allocate DIM keyring: %ld\n", ret);
 		return ret;
 	}
 
@@ -149,7 +149,7 @@ int dim_core_sig_init(void)
 					 DIM_CORE_MAX_FILE_SIZE, NULL,
 					 READING_X509_CERTIFICATE);
 	if (ret < 0) {
-		dim_err("fail to read DIM cert file: %ld\n", ret);
+		dim_err("failed to read DIM cert file: %ld\n", ret);
 		goto err;
 	}
 
@@ -158,13 +158,13 @@ int dim_core_sig_init(void)
 				   DIM_CORE_KEY_PERM, KEY_ALLOC_NOT_IN_QUOTA);
 	if (IS_ERR(key)) {
 		ret = PTR_ERR(key);
-		dim_err("fail to load DIM cert: %ld\n", ret);
+		dim_err("failed to load DIM cert: %ld\n", ret);
 		goto err;
 	}
 
 	ret = dim_hash_init("sha256", &dim_core_sig_hash);
 	if (ret < 0) {
-		dim_err("fail to init dim signature hash: %ld\n", ret);
+		dim_err("failed to init dim signature hash: %ld\n", ret);
 		goto err;
 	}
 

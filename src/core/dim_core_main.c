@@ -38,20 +38,20 @@ static int __init dim_core_init(void)
 
 	ret = dim_core_kallsyms_init();
 	if (ret < 0) {
-		dim_err("fail to initialize dim kernel symbol: %d\n", ret);
+		dim_err("failed to initialize dim kernel symbol: %d\n", ret);
 		goto err;
 	}
 
 	ret = dim_mem_pool_init();
 	if (ret < 0) {
-		dim_err("fail to initialize dim memory pool: %d\n", ret);
+		dim_err("failed to initialize dim memory pool: %d\n", ret);
 		goto err;
 	}
 
 	if (signature) {
 		ret = dim_core_sig_init();
 		if (ret < 0) {
-			dim_err("fail to initialize dim signature: %d\n", ret);
+			dim_err("failed to initialize dim signature: %d\n", ret);
 			goto err;
 		}
 	}
@@ -59,13 +59,13 @@ static int __init dim_core_init(void)
 	ret = dim_core_measure_init(measure_hash == NULL ?
 				    DIM_CORE_HASH_DEFAULT : measure_hash);
 	if (ret < 0) {
-		dim_err("fail to initialize dim measurement: %d\n", ret);
+		dim_err("failed to initialize dim measurement: %d\n", ret);
 		goto err;
 	}
 
 	ret = dim_core_create_fs();
 	if (ret < 0) {
-		dim_err("fail to create dim fs entry: %d\n", ret);
+		dim_err("failed to create dim fs entry: %d\n", ret);
 		goto err;
 	}
 

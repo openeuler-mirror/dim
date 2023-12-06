@@ -111,7 +111,7 @@ static int calc_kernel_digest(struct dim_digest *digest)
 			sizeof(struct jump_entry);
 		ret = sort_jump_table(sjump, jcode_cnt, &jcode_sort);
 		if (ret < 0) {
-			dim_err("fail to sort kernel jump table: %d\n", ret);
+			dim_err("failed to sort kernel jump table: %d\n", ret);
 			return ret;
 		}
 	} else {
@@ -121,7 +121,7 @@ static int calc_kernel_digest(struct dim_digest *digest)
 
 	ret = do_calc_kernel_digest(stext, etext, jcode_sort, jcode_cnt, digest);
 	if (ret < 0)
-		dim_err("fail to calculate kernel digest: %d\n", ret);
+		dim_err("failed to calculate kernel digest: %d\n", ret);
 
 	vfree(jcode_sort);
 	return ret;
@@ -139,13 +139,13 @@ int dim_core_measure_kernel(int baseline_init)
 
 	ret = calc_kernel_digest(&digest);
 	if (ret < 0) {
-		dim_err("fail to calculate kernel digest: %d\n", ret);
+		dim_err("failed to calculate kernel digest: %d\n", ret);
 		return ret;
 	}
 
 	ret = dim_core_check_kernel_digest(baseline_init, kr, &digest);
 	if (ret < 0)
-		dim_err("fail to check kernel digest: %d\n", ret);
+		dim_err("failed to check kernel digest: %d\n", ret);
 
 	return ret;
 }
