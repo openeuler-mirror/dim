@@ -136,7 +136,7 @@ echo 1 > /sys/kernel/security/dim/baseline_init
 echo 1 > /sys/kernel/security/dim/measure
 ```
 
-度量完成后可通过步骤(6)查询度量日志，如果度量结果和动态基线阶段的度量结果一致，则度量日志不会更新，否则会新增异常度量日志。
+度量完成后可通过步骤(5)查询度量日志，如果度量结果和动态基线阶段的度量结果一致，则度量日志不会更新，否则会新增异常度量日志。
 
 ### 4.1 使用dim_monitor组件度量dim_core组件
 
@@ -151,7 +151,7 @@ lsmod | grep dim_monitor
 **(2) 执行动态基线：**
 
 ```
-echo 1 > /sys/kernel/security/dim/monitor_baseline_init
+echo 1 > /sys/kernel/security/dim/monitor_baseline
 ```
 
 **(3) 查询度量日志：**
@@ -172,7 +172,7 @@ echo 1 > /sys/kernel/security/dim/monitor_baseline_init
 echo 1 > /sys/kernel/security/dim/measure
 ```
 
-度量完成后可通过步骤(6)查询度量日志，如果度量结果和动态基线阶段的度量结果一致，则度量日志不会更新，否则会新增异常度量日志。
+度量完成后可通过步骤(3)查询度量日志，如果度量结果和动态基线阶段的度量结果一致，则度量日志不会更新，否则会新增异常度量日志。
 
 ## 5 文档资料
 
