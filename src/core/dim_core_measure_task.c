@@ -223,7 +223,11 @@ static int update_vma_digest(struct vm_area_struct *vma_start,
 		return -ENOMEM;
 
 	ret_pages = get_user_pages_remote(vma_start->vm_mm, addr_start, nr_pages,
+#if LINUX_VERSION_CODE <= KERNEL_VERSION(6,4,0)
 					  0, pages, NULL, NULL);
+#else
+					  0, pages, NULL);
+#endif
 	if (ret_pages < 0) {
 		dim_err("failed to get vma pages: %ld\n", ret_pages);
 		vfree(pages);
