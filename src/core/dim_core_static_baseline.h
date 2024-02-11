@@ -5,6 +5,8 @@
 #ifndef __DIM_CORE_STATIC_BASELINE_H
 #define __DIM_CORE_STATIC_BASELINE_H
 
+#include "dim_measure.h"
+
 #define DIM_STATIC_BASELINE_ROOT "/etc/dim/digest_list"
 #define DIM_STATIC_BASELINE_LINE_MAX 10000
 

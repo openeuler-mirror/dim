@@ -10,7 +10,6 @@
 #include <linux/seq_file.h>
 
 #include "dim_measure_log.h"
-#include "dim_status.h"
 
 #define DIM_ENTRY_DIR_MASK (S_IFDIR | S_IRWXU | S_IRUSR)
 #define DIM_ENTRY_RW_MASK (S_IWUSR | S_IRUSR)
@@ -26,7 +25,7 @@ struct dim_entry {
 };
 
 /* the file interface for trigger by 'echo 1 > file_path' */
-#define dim_trigger_entry(sname, fname, function, param)		\
+#define dim_trigger_entry(sname, fname, function)			\
 static ssize_t sname##_trigger(struct file *file,			\
 			       const char __user *buf,			\
 			       size_t count, loff_t *ppos)		\
@@ -41,7 +40,7 @@ static ssize_t sname##_trigger(struct file *file,			\
 	if (ret < 0 || val != 1)					\
 		return ret < 0 ? ret : -EINVAL;				\
 									\
-	ret = function(param);						\
+	ret = function();						\
 	if (ret < 0)							\
 		return ret;						\
 									\
@@ -113,8 +112,8 @@ static struct dim_entry sname##_entry = {				\
 	.fops = &sname##_ops,						\
 };
 
-/* the file interface for reading dim status */
-#define dim_status_entry(sname, fname, status_ptr)			\
+/* the file interface for print string */
+#define dim_string_print_entry(sname, fname, function)			\
 static ssize_t sname##_read(struct file *file,				\
 			    char __user *buf,				\
 			    size_t count, loff_t *ppos)			\
@@ -125,7 +124,7 @@ static ssize_t sname##_read(struct file *file,				\
 	len = scnprintf(tmpbuf,						\
 			DIM_FS_TMP_BUF_SIZE,				\
 			"%s\n",						\
-			dim_status_get_name(status_ptr));		\
+			function());					\
 									\
 	return simple_read_from_buffer(buf, count, ppos, tmpbuf, len);	\
 }									\

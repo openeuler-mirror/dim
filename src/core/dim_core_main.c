@@ -4,30 +4,36 @@
 
 #include <linux/module.h>
 
-#include "dim_core.h"
 #include "dim_core_symbol.h"
 #include "dim_core_fs.h"
 #include "dim_core_measure.h"
 #include "dim_core_mem_pool.h"
 #include "dim_core_sig.h"
 
-static char *measure_hash = NULL;
-bool signature = false;
+/* common measurement configuration */
+static struct dim_measure_cfg cfg = {
+	.alg_name = DIM_CORE_HASH_DEFAULT,
+	.log_cap = DIM_CORE_LOG_CAP_DEFAULT,
+};
 
-module_param(measure_log_capacity, uint, 0);
+module_param_named(measure_log_capacity, cfg.log_cap, uint, 0);
 MODULE_PARM_DESC(measure_log_capacity, "Max number of measure log");
 
-module_param(measure_schedule, uint, 0);
+module_param_named(measure_schedule, cfg.schedule_ms, uint, 0);
 MODULE_PARM_DESC(measure_schedule, "Schedule time (ms) for each measure object");
+
+module_param_named(measure_hash, cfg.alg_name, charp, 0);
+MODULE_PARM_DESC(measure_hash, "Hash algorithm for measurement");
+
+module_param_named(measure_pcr, cfg.pcr, uint, 0);
+MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
+
+/* special measurement configuration for dim_core */
+static unsigned int measure_interval = 0;
+static bool signature = false;
 
 module_param(measure_interval, uint, 0);
 MODULE_PARM_DESC(measure_interval, "Interval time (min) for automatic measurement");
-
-module_param(measure_hash, charp, 0);
-MODULE_PARM_DESC(measure_hash, "Hash algorithm for measurement");
-
-module_param(measure_pcr, uint, 0);
-MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
 
 module_param(signature, bool, 0);
 MODULE_PARM_DESC(signature, "Require signature for policy and static baseline");
@@ -56,8 +62,7 @@ static int __init dim_core_init(void)
 		}
 	}
 
-	ret = dim_core_measure_init(measure_hash == NULL ?
-				    DIM_CORE_HASH_DEFAULT : measure_hash);
+	ret = dim_core_measure_init(&cfg, measure_interval);
 	if (ret < 0) {
 		dim_err("failed to initialize dim measurement: %d\n", ret);
 		goto err;
@@ -72,14 +77,18 @@ static int __init dim_core_init(void)
 	return 0;
 err:
 	dim_core_destroy_fs();
-	dim_core_destroy_measure();
+	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
+
+	if (signature)
+		dim_core_sig_destroy();
+
 	return ret;
 }
 
 static void __exit dim_core_exit(void)
 {
-	dim_core_destroy_measure();
+	dim_core_measure_destroy();
 	dim_core_destroy_fs();
 	dim_mem_pool_destroy();
 

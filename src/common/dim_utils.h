@@ -10,11 +10,11 @@
 
 #define DIM_ARRAY_LEN(ARR) (sizeof(ARR) / sizeof(ARR[0]))
 
-#define dim_fmt(fmt) DIM_MODULE ": " fmt
+#define dim_fmt(fmt) "%s: " fmt
 
-#define dim_err(fmt, ...) pr_err(dim_fmt(fmt), ##__VA_ARGS__)
-#define dim_warn(fmt, ...) pr_warn(dim_fmt(fmt), ##__VA_ARGS__)
-#define dim_info(fmt, ...) pr_info(dim_fmt(fmt), ##__VA_ARGS__)
+#define dim_err(fmt, ...) pr_err(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
+#define dim_warn(fmt, ...) pr_warn(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
+#define dim_info(fmt, ...) pr_info(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
 #define dim_devel(fmt, ...)
 
 void *dim_kmalloc_gfp(size_t size);

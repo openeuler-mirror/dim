@@ -16,11 +16,39 @@
 #include "dim_measure_log.h"
 #include "dim_baseline.h"
 
-#include "dim_core.h"
 #include "dim_core_symbol.h"
 #include "dim_core_policy.h"
 #include "dim_core_measure.h"
-#include "dim_core_baseline.h"
+
+#include "dim_core_measure_task.h"
+
+/* max number of kill tasks */
+#define DIM_KILL_TASKS_MAX (1024)
+
+struct vm_text_area {
+	struct mm_struct *mm;
+	struct vm_area_struct *vma_start;
+	struct vm_area_struct *vma_end;
+};
+
+struct task_measure_ctx {
+	struct dim_measure *m;
+	int mode;
+	char path_buf[PATH_MAX];
+	const char *path;
+	struct task_struct *task; /* current measured task */
+	bool task_kill;
+	bool task_measure;
+};
+
+struct task_kill_ctx {
+	struct task_struct **buf;
+	int len;
+	int size;
+	int ret;
+};
+
+typedef int (*task_measurer)(struct task_struct *, struct task_measure_ctx *);
 
 static struct file *get_vm_file(struct vm_area_struct *vma)
 {
@@ -167,7 +195,7 @@ static int kill_task_tree(struct task_struct *tsk)
 	const int def_size = 32;
 	struct task_kill_ctx ctx = { .size = def_size };
 
-	ctx.buf = kmalloc(def_size * sizeof(struct task_struct *), GFP_KERNEL);
+	ctx.buf = dim_kmalloc_gfp(def_size * sizeof(struct task_struct *));
 	if (ctx.buf == NULL)
 		return -ENOMEM;
 
@@ -197,12 +225,12 @@ static bool vm_file_match_policy(struct file *vm_file,
 		return false;
 	}
 
-	if (ctx->baseline)
+	if (ctx->mode == DIM_BASELINE)
 		return dim_core_policy_match(DIM_POLICY_OBJ_BPRM_TEXT,
 					     DIM_POLICY_KEY_PATH, ctx->path);
 
-	return dim_core_search_dynamic_baseline(ctx->path, DIM_BASELINE_USER,
-						&dig) == 0;
+	return dim_measure_dynamic_baseline_search(ctx->m, ctx->path,
+		DIM_BASELINE_USER, &dig) == 0;
 }
 
 static int update_vma_digest(struct vm_area_struct *vma_start,
@@ -258,8 +286,8 @@ static int check_user_digest(struct dim_digest *digest,
 	int log_flag = 0;
 	int action = 0;
 
-	ret = dim_core_check_user_digest(ctx->baseline, ctx->path,
-					 digest, &log_flag);
+	ret = dim_measure_process_static_result(ctx->m, ctx->mode, ctx->path,
+						digest, &log_flag);
 	if (ret < 0) {
 		dim_err("failed to check user digest: %d\n", ret);
 		return ret;
@@ -281,10 +309,12 @@ static int measure_anon_text_vma(struct vm_area_struct *vma,
 				 struct task_measure_ctx *ctx)
 {
 	int ret = 0;
-	struct dim_digest digest = { .algo = dim_core_hash.algo };
-	SHASH_DESC_ON_STACK(shash, dim_core_hash.tfm);
+	struct dim_digest digest = {
+		.algo = ctx->m->hash.algo,
+	};
+	SHASH_DESC_ON_STACK(shash, ctx->hash.tfm);
 
-	shash->tfm = dim_core_hash.tfm;
+	shash->tfm = ctx->hash.tfm;
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
 		return ret;
@@ -333,10 +363,12 @@ static int measure_task_module_file_text(struct vm_area_struct *vma,
 	int ret = 0;
 	struct vm_area_struct *v = vma;
 	struct vm_area_struct *v_end = NULL;
-	struct dim_digest digest = { .algo = dim_core_hash.algo };
-	SHASH_DESC_ON_STACK(shash, dim_core_hash.tfm);
+	struct dim_digest digest = {
+		.algo = ctx->m->hash.algo
+	};
+	SHASH_DESC_ON_STACK(shash, ctx->m->hash.tfm);
 
-	shash->tfm = dim_core_hash.tfm;
+	shash->tfm = ctx->m->hash.tfm;
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
 		return ret;
@@ -434,8 +466,8 @@ out:
 	}
 
 	/* do schedule if this task is measured */
-	if (ctx->task_measure && measure_schedule)
-		schedule_timeout_uninterruptible(measure_schedule_jiffies);
+	if (ctx->task_measure)
+		dim_measure_schedule(ctx->m);
 
 	return 0;
 }
@@ -508,18 +540,23 @@ static int walk_tasks(task_measurer f, struct task_measure_ctx *ctx)
 	return 0;
 }
 
-int dim_core_measure_task(int baseline_init)
+static int user_text_measure(int mode, struct dim_measure *m)
 {
-	int ret = 0;
 	struct task_measure_ctx *ctx = NULL;
 
-	ctx = kzalloc(sizeof(struct task_measure_ctx), GFP_KERNEL);
+	if (m == NULL)
+		return -EINVAL;
+
+	ctx = vmalloc(sizeof(struct task_measure_ctx));
 	if (ctx == NULL)
 		return -ENOMEM;
 
-	ctx->baseline = baseline_init;
-	ret = walk_tasks(measure_task, ctx);
-	kfree(ctx);
-	return ret;
+	ctx->mode = mode;
+	ctx->m = m;
+	return walk_tasks(measure_task, ctx);
 }
 
+struct dim_measure_task dim_core_measure_task_user_text = {
+	.name = "dim_core_measure_task_user_text",
+	.measure = user_text_measure,
+};

@@ -49,7 +49,7 @@ int dim_hash_calculate(const void *data, unsigned int len,
 	int ret = 0;
 	SHASH_DESC_ON_STACK(shash, alg->tfm);
 
-	if (data == NULL || alg == NULL || digest == NULL)
+	if (data == NULL || alg == NULL || digest == NULL || alg->tfm == NULL)
 		return -EINVAL;
 
 	digest->algo = alg->algo;

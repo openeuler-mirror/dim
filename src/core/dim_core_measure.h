@@ -5,75 +5,32 @@
 #ifndef __DIM_CORE_MEASURE_H
 #define __DIM_CORE_MEASURE_H
 
-#include "dim_hash.h"
+#include "dim_measure.h"
+
+/* default configuration */
+#define DIM_CORE_HASH_DEFAULT "sha256"
+#define DIM_CORE_LOG_CAP_DEFAULT 100000
 
 /* max measure interval = 1 year */
 #define DIM_INTERVAL_MAX (365 * 24 * 60)
 #define DIM_MINUTE_TO_SEC (60UL)
 #define DIM_MINUTE_TO_NSEC (60UL * 1000 * 1000 * 1000)
-/* max number of kill tasks */
-#define DIM_KILL_TASKS_MAX (1024)
-/* limit of measure parameter */
-#define MEASURE_LOG_CAP_MAX (UINT_MAX)
-#define MEASURE_LOG_CAP_MIN (100)
-#define MEASURE_SCHEDULE_MAX (1000)
-/* max size of x86 */
-#define DIM_JUMP_LABEL_NOP_SIZE_MAX 5
 
-struct vm_text_area {
-	struct mm_struct *mm;
-	struct vm_area_struct *vma_start;
-	struct vm_area_struct *vma_end;
-};
+extern struct dim_measure dim_core_handle;
 
-struct task_measure_ctx {
-	int baseline; /* measure or baseline init */
-	char path_buf[PATH_MAX];
-	const char *path;
-	struct task_struct *task; /* current measured task */
-	bool task_kill;
-	bool task_measure;
-};
+/* global init and destroy */
+int dim_core_measure_init(struct dim_measure_cfg *cfg, unsigned int interval);
+void dim_core_measure_destroy(void);
 
-struct task_kill_ctx {
-	struct task_struct **buf;
-	int len;
-	int size;
-	int ret;
-};
-
-typedef int (*task_measurer)(struct task_struct *, struct task_measure_ctx *);
-
-extern struct dim_hash dim_core_hash;
-extern struct dim_measure_log_tree dim_core_log;
-extern struct dim_tpm dim_core_tpm;
-extern unsigned int measure_log_capacity;
-extern unsigned int measure_schedule;
-extern unsigned int measure_interval;
-extern unsigned int measure_pcr;
-extern unsigned long measure_schedule_jiffies;
-
-int dim_core_measure_init(const char *alg_name);
-void dim_core_destroy_measure(void);
-int dim_core_measure(int baseline_init);
+/* control function for measurement parameters */
+const char *dim_core_status_print(void);
 long dim_core_interval_get(void);
 int dim_core_interval_set(unsigned int p);
 long dim_core_tampered_action_get(void);
 int dim_core_tampered_action_set(unsigned int p);
 
-int dim_core_measure_kernel(int baseline_init);
-int dim_core_measure_module(int baseline_init);
-int dim_core_measure_task(int baseline_init);
-
-int dim_core_add_measure_log(const char *name,
-			     struct dim_digest *digest,
-			     int flag);
-int dim_core_check_kernel_digest(int baseline_init,
-				 const char *name,
-				 struct dim_digest *digest);
-int dim_core_check_user_digest(int baseline_init,
-			       const char *name,
-			       struct dim_digest *digest,
-			       int *log_flag);
+/* measurement trigger functions */
+int dim_core_measure_blocking(void);
+int dim_core_baseline_blocking(void);
 
 #endif

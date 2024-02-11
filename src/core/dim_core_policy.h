@@ -5,6 +5,8 @@
 #ifndef __DIM_CORE_POLICY_H
 #define __DIM_CORE_POLICY_H
 
+#include <linux/rbtree.h>
+
 #define DIM_POLICY_PATH "/etc/dim/policy"
 #define DIM_POLICY_LINE_MAX 10000
 

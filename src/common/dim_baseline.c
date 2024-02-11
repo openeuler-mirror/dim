@@ -4,6 +4,7 @@
 
 #include "dim_rb.h"
 #include "dim_baseline.h"
+#include "dim_utils.h"
 
 static int dim_baseline_compare(struct dim_baseline *x,
 				struct dim_baseline *y)
@@ -104,7 +105,7 @@ int dim_baseline_add(struct dim_baseline_tree *root, const char *name,
 	if (ret < 0)
 		goto err;
 
-        strncpy((char *)baseline->name, name, buf_len - 1);
+	strncpy((char *)baseline->name, name, buf_len - 1);
         ((char *)baseline->name)[buf_len - 1] = '\0';
 
 	write_lock(&root->lock);
@@ -143,12 +144,13 @@ void dim_baseline_destroy_tree(struct dim_baseline_tree *root)
 int dim_baseline_init_tree(malloc_func malloc, free_func free,
 			   struct dim_baseline_tree *root)
 {
-	if (malloc == NULL || free == NULL || root == NULL)
+	if (root == NULL)
 		return -EINVAL;
 
 	rwlock_init(&root->lock);
 	root->rb_root = RB_ROOT;
-	root->malloc = malloc;
-	root->free = free;
+	/* use kmalloc by default */
+	root->malloc = malloc == NULL ? dim_kmalloc_gfp : malloc;
+	root->free = free == NULL ? dim_kfree : free;
 	return 0;
 }
