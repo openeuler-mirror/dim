@@ -16,6 +16,7 @@
 #define DIM_MINUTE_TO_SEC (60UL)
 #define DIM_MINUTE_TO_NSEC (60UL * 1000 * 1000 * 1000)
 
+extern bool dim_core_measure_action_enabled;
 extern struct dim_measure dim_core_handle;
 
 /* global init and destroy */

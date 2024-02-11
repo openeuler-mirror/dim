@@ -17,25 +17,47 @@ void *dim_kmalloc_gfp(size_t size)
 
 void dim_kfree(void *data)
 {
-	kfree(data);
+	if (data != NULL)
+		kfree(data);
 }
 
-const char *dim_absolute_path(const char *path, char *buf, int len)
+int dim_get_absolute_path(const char *path, const char **result)
 {
-	int ret;
+	int ret = 0;
 	struct path p;
+	char *buf = NULL;
 	char *apath = NULL;
 
-	if (path == NULL || buf == NULL)
-		return ERR_PTR(-EINVAL);
+	if (path == NULL)
+		return -EINVAL;
 
 	ret = kern_path(path, LOOKUP_FOLLOW, &p);
 	if (ret < 0)
-		return ERR_PTR(ret);
+		return ret;
 
-	apath = d_path(&p, buf, len);
+	buf = dim_kmalloc_gfp(PATH_MAX);
+	if (buf == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	apath = d_path(&p, buf, PATH_MAX);
+	if (IS_ERR(apath)) {
+		ret = PTR_ERR(apath);
+		goto out;
+	}
+
+	*result = kstrdup(apath, GFP_KERNEL);
+	if (*result == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+out:
 	path_put(&p);
-	return apath;
+	if (buf != NULL)
+		dim_kfree(buf);
+
+	return ret;	
 }
 
 bool dim_string_end_with(const char *str, const char *ext)
@@ -53,7 +75,7 @@ bool dim_string_end_with(const char *str, const char *ext)
 	return strcmp(str + name_len - ext_len, ext) == 0;
 }
 
-int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
+int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data)
 {
 	int ret = 0;
 	int i = 0;
@@ -71,7 +93,7 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
 
 		if (buf[i] == '\n') {
 			buf[i] = '\0';
-			ret = line_parser(line, line_no);
+			ret = line_parser(line, line_no, data);
 			line = &buf[i + 1];
 		} else {
 			line_len = buf + i - line + 1;
@@ -80,7 +102,7 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
 				return -ENOMEM;
 
 			memcpy(line_buf, line, line_len);
-			ret = line_parser(line_buf, line_no);
+			ret = line_parser(line_buf, line_no, data);
 		}
 
 		if (ret < 0) {

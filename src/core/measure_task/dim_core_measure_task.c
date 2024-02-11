@@ -293,13 +293,17 @@ static int check_user_digest(struct dim_digest *digest,
 		return ret;
 	}
 
-	if (log_flag != LOG_TAMPERED || !dim_core_tampered_action_get())
+	if (log_flag != LOG_TAMPERED || !dim_core_measure_action_enabled)
 		return 0;
 
+	/* now the process is tampered, check if action need to be taken */
 	action = dim_core_policy_get_action(DIM_POLICY_OBJ_BPRM_TEXT,
 					    DIM_POLICY_KEY_PATH, ctx->path);
-	if (action == DIM_POLICY_KILL)
+	if (action == DIM_POLICY_ACTION_KILL) {
+		dim_warn("kill action is set, process %s will be killed\n",
+			 ctx->path);
 		ctx->task_kill = true; /* this task need to be killed */
+	}
 
 	return 0;
 }

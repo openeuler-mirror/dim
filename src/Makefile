@@ -6,7 +6,6 @@ obj-m += dim_monitor.o
 dim_core-objs += core/dim_core_main.o
 dim_core-objs += core/dim_core_fs.o
 dim_core-objs += core/dim_core_mem_pool.o
-dim_core-objs += core/dim_core_policy.o
 dim_core-objs += core/dim_core_static_baseline.o
 dim_core-objs += core/dim_core_measure.o
 dim_core-objs += core/dim_core_symbol.o
@@ -14,6 +13,8 @@ dim_core-objs += core/dim_core_sig.o
 dim_core-objs += core/measure_task/dim_core_measure_kernel.o
 dim_core-objs += core/measure_task/dim_core_measure_module.o
 dim_core-objs += core/measure_task/dim_core_measure_task.o
+dim_core-objs += core/policy/dim_core_policy.o
+dim_core-objs += core/policy/dim_core_policy_complex.o
 dim_core-objs += common/dim_entry.o
 dim_core-objs += common/dim_utils.o
 dim_core-objs += common/dim_baseline.o
@@ -46,9 +47,9 @@ dim_monitor-objs += measure/dim_measure_status.o
 dim_monitor-objs += monitor/measure_task/dim_monitor_measure_data.o
 dim_monitor-objs += monitor/measure_task/dim_monitor_measure_text.o
 
-# TODO
 ccflags-y := -I$(src)/core
 ccflags-y += -I$(src)/core/measure_task
+ccflags-y += -I$(src)/core/policy
 ccflags-y += -I$(src)/monitor
 ccflags-y += -I$(src)/monitor/measure_task
 ccflags-y += -I$(src)/common

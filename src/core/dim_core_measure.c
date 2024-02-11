@@ -30,7 +30,6 @@ static struct work_struct dim_baseline_work;
 
 /* special measurement parameters for dim_core */
 static atomic_t measure_interval = ATOMIC_INIT(0);
-static atomic_t tampered_action = ATOMIC_INIT(0);
 
 /* interface to print measure status string */
 const char *dim_core_status_print(void)
@@ -65,22 +64,6 @@ int dim_core_interval_set(unsigned int min)
 		mod_delayed_work(dim_work_queue, &dim_measure_work, jiffies);
 	}
 
-	return 0;
-}
-
-/* interface to get tamper action flag */
-long dim_core_tampered_action_get(void)
-{
-	return atomic_read(&tampered_action);
-}
-
-/* interface to set tamper action flag */
-int dim_core_tampered_action_set(unsigned int p)
-{
-	if (p != 0 && p != 1)
-		return -EINVAL;
-
-	atomic_set(&tampered_action, p);
 	return 0;
 }
 

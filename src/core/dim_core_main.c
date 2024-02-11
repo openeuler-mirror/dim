@@ -4,6 +4,7 @@
 
 #include <linux/module.h>
 
+#include "dim_core_policy.h"
 #include "dim_core_symbol.h"
 #include "dim_core_fs.h"
 #include "dim_core_measure.h"
@@ -30,10 +31,14 @@ MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
 
 /* special measurement configuration for dim_core */
 static unsigned int measure_interval = 0;
+bool dim_core_measure_action_enabled = 0;
 static bool signature = false;
 
 module_param(measure_interval, uint, 0);
 MODULE_PARM_DESC(measure_interval, "Interval time (min) for automatic measurement");
+
+module_param_named(measure_action, dim_core_measure_action_enabled, bool, 0);
+MODULE_PARM_DESC(signature, "Enable actions when tampering detected");
 
 module_param(signature, bool, 0);
 MODULE_PARM_DESC(signature, "Require signature for policy and static baseline");

@@ -47,7 +47,7 @@ static bool match_policy(const char *name, int type)
 				     DIM_POLICY_KEY_NAME, mod_name);
 }
 
-static int parse_simple_baseline_line(char* line, int line_no)
+static int parse_simple_baseline_line(char* line, int line_no, void *data)
 {
 	int ret = 0;
 	int type = 0;
@@ -149,7 +149,7 @@ static_baseline_load(struct dir_context *__ctx,
 	}
 
 	buf_len = ret;
-	ret = dim_parse_line_buf(buf, buf_len, parse_simple_baseline_line);
+	ret = dim_parse_line_buf(buf, buf_len, parse_simple_baseline_line, NULL);
 	if (ret < 0)
 		dim_err("failed to parse baseline file %s: %d\n", name, ret);
 out:
