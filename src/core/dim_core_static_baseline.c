@@ -17,10 +17,9 @@
 #include "dim_hash.h"
 #include "dim_baseline.h"
 
-#include "dim_core.h"
 #include "dim_core_sig.h"
 #include "dim_core_policy.h"
-#include "dim_core_baseline.h"
+#include "dim_core_measure.h"
 #include "dim_core_static_baseline.h"
 
 static bool match_policy(const char *name, int type)
@@ -110,7 +109,8 @@ static int parse_simple_baseline_line(char* line, int line_no)
 	if (!match_policy(line_str, type))
 		return 0;
 
-	ret = dim_core_add_static_baseline(line_str, type, &digest);
+	ret = dim_measure_static_baseline_add(&dim_core_handle, line_str,
+					      type, &digest);
 	if (ret < 0)
 		dim_warn("failed to add static baseline at line %d: %d\n",
 			 line_no, ret);
@@ -128,11 +128,11 @@ static int
 static bool
 #endif
 static_baseline_load(struct dir_context *__ctx,
-				const char *name,
-				int name_len,
-				loff_t offset,
-				unsigned long long ino,
-				unsigned d_type)
+		     const char *name,
+		     int name_len,
+		     loff_t offset,
+		     unsigned long long ino,
+		     unsigned d_type)
 {
 	struct readdir_ctx *ctx = container_of(__ctx, typeof(*ctx), ctx);
 	int ret;

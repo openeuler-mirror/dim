@@ -2,153 +2,107 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
-#include <linux/highmem.h>
-#include <linux/seq_file.h>
-#include <linux/vmalloc.h>
+#include <linux/workqueue.h>
 
-#include "dim_measure_log.h"
-#include "dim_tpm.h"
-
-#include "dim_core.h"
-#include "dim_core_status.h"
 #include "dim_core_policy.h"
+#include "dim_core_mem_pool.h"
 #include "dim_core_static_baseline.h"
-#include "dim_core_baseline.h"
+#include "dim_core_measure_task.h"
 #include "dim_core_measure.h"
 
-/* lock to prevent concurrent measurement */
+/* measurement tasks */
+static struct dim_measure_task *dim_core_tasks[] = {
+	&dim_core_measure_task_user_text,
+	&dim_core_measure_task_kernel_text,
+	&dim_core_measure_task_module_text,
+};
+
+/* the global measurement handle */
+struct dim_measure dim_core_handle = { 0 };
+
+/* lock to prevent trigger multiple measurement */
 DEFINE_MUTEX(dim_core_measure_lock);
-/* lock to prevent concurrent baseline_init */
-DEFINE_MUTEX(dim_core_baseline_lock);
-/* lock to prevent concurrent setting interval */
-DEFINE_MUTEX(dim_core_interval_lock);
-/* lock to prevent concurrent setting tampered_action */
-DEFINE_MUTEX(dim_core_tampered_action_lock);
-/* dim work quee */
+
+/* dim measurement work */
 static struct workqueue_struct *dim_work_queue = NULL;
 static struct delayed_work dim_measure_work;
-/* parameters set by module commandline */
-unsigned int measure_log_capacity = 100000;
-unsigned int measure_schedule = 0;
-unsigned int measure_interval = 0;
-unsigned int measure_pcr = 0;
-bool tampered_action = false;
+static struct work_struct dim_baseline_work;
 
-/* time (jiffies) to set */
-unsigned long measure_schedule_jiffies = 0;
-static unsigned long measure_interval_jiffies = 0;
+/* special measurement parameters for dim_core */
+static atomic_t measure_interval = ATOMIC_INIT(0);
+static atomic_t tampered_action = ATOMIC_INIT(0);
 
-struct dim_tpm dim_core_tpm = { 0 };
-struct dim_hash dim_core_hash = { 0 };
-struct dim_measure_log_tree dim_core_log = { 0 };
+/* interface to print measure status string */
+const char *dim_core_status_print(void)
+{
+	return dim_measure_status_print(&dim_core_handle);
+}
 
+/* interface to get measure interval */
 long dim_core_interval_get(void)
 {
-	long p = 0;
-
-	mutex_lock(&dim_core_interval_lock);
-	p = measure_interval;
-	mutex_unlock(&dim_core_interval_lock);
-	return p;
+	return atomic_read(&measure_interval);
 }
 
-unsigned long dim_core_interval_jiffies_get(void)
-{
-	unsigned long p = 0;
-
-	mutex_lock(&dim_core_interval_lock);
-	p = measure_interval_jiffies;
-	mutex_unlock(&dim_core_interval_lock);
-	return p;
-}
-
+/* interface to set measure interval */
 int dim_core_interval_set(unsigned int min)
 {
-	unsigned long min_jiffies = 0;
+	unsigned long jiffies = 0;
 
 	if (min > DIM_INTERVAL_MAX ||
 	    (unsigned long)min * DIM_MINUTE_TO_SEC > MAX_SEC_IN_JIFFIES)
 		return -ERANGE;
 
-	min_jiffies = (min == 0) ? 0 :
-		nsecs_to_jiffies64((unsigned long)min * DIM_MINUTE_TO_NSEC);
-
-	mutex_lock(&dim_core_interval_lock);
-	measure_interval = min;
-	measure_interval_jiffies = min_jiffies;
-	if (measure_interval == 0) {
+	atomic_set(&measure_interval, min);
+	if (min == 0) {
 		dim_info("cancel dim timed measure work");
 		cancel_delayed_work_sync(&dim_measure_work);
 	} else {
+		jiffies = nsecs_to_jiffies64((unsigned long)min *
+					     DIM_MINUTE_TO_NSEC);
 		dim_info("modify dim measure interval to %u min "
-			 "(jittfies = 0x%lx)", min, min_jiffies);
-		mod_delayed_work(dim_work_queue, &dim_measure_work,
-				 min_jiffies);
+			 "(jittfies = 0x%lx)", min, jiffies);
+		mod_delayed_work(dim_work_queue, &dim_measure_work, jiffies);
 	}
 
-	mutex_unlock(&dim_core_interval_lock);
 	return 0;
 }
 
+/* interface to get tamper action flag */
 long dim_core_tampered_action_get(void)
 {
-	long p = 0;
-
-	mutex_lock(&dim_core_tampered_action_lock);
-	p = tampered_action ? 1 : 0;
-	mutex_unlock(&dim_core_tampered_action_lock);
-	return p;
+	return atomic_read(&tampered_action);
 }
 
+/* interface to set tamper action flag */
 int dim_core_tampered_action_set(unsigned int p)
 {
 	if (p != 0 && p != 1)
 		return -EINVAL;
 
-	mutex_lock(&dim_core_tampered_action_lock);
-	tampered_action = !!p;
-	mutex_unlock(&dim_core_tampered_action_lock);
+	atomic_set(&tampered_action, p);
 	return 0;
 }
 
-static void do_measure(void)
-{
-	int ret = 0;
-	int bi = 0;
-
-	/* dont do measure when doing baseline_init */
-	if (!mutex_trylock(&dim_core_baseline_lock))
-		return;
-
-	bi = (dim_core_status_get() == DIM_BASELINE_RUNNING ? 1 : 0);
-	dim_info("start dim measure work, baseline_init = %d\n", bi);
-
-	ret = dim_core_measure_task(bi);
-	if (ret < 0)
-		dim_err("failed to measure user process: %d\n", ret);
-
-	ret = dim_core_measure_module(bi);
-	if (ret < 0)
-		dim_err("failed to measure kernel modules: %d\n", ret);
-
-	ret = dim_core_measure_kernel(bi);
-	if (ret < 0)
-		dim_err("failed to measure kernel: %d\n", ret);
-
-	mutex_unlock(&dim_core_baseline_lock);
-}
-
-static int do_baseline(void)
+static int baseline_prepare(struct dim_measure *m)
 {
 	int ret = 0;
 
+	if (m == NULL)
+		return -EINVAL;
+
+	/* 1. reload dim policy */
 	ret = dim_core_policy_load();
 	if (ret < 0) {
 		dim_err("failed to load dim core policy: %d\n", ret);
 		return ret;
 	}
 
-	dim_core_baseline_destroy();
+	/* 2. clear dim baseline */
+	dim_baseline_destroy_tree(&m->static_baseline);
+	dim_baseline_destroy_tree(&m->dynamic_baseline);
+
+	/* 3. reload dim baseline */
 	ret = dim_core_static_baseline_load();
 	if (ret < 0) {
 		dim_err("failed to load dim static baseline: %d\n", ret);
@@ -156,21 +110,61 @@ static int do_baseline(void)
 		return ret;
 	}
 
-	dim_measure_log_refresh(&dim_core_log);
+	/* 4. refresh measure log */
+	dim_measure_log_refresh(&m->log);
 	return 0;
 }
 
-static void dim_worker_work_cb(struct work_struct *work)
+static void queue_delayed_measure_work(void)
 {
-	unsigned long p;
+	unsigned long jiffies = 0;
+	unsigned int interval = atomic_read(&measure_interval);
 
-	do_measure();
-	p = dim_core_interval_jiffies_get();
-	if (p != 0)
-		queue_delayed_work(dim_work_queue, &dim_measure_work, p);
+	if (interval == 0)
+		return;
+
+	jiffies = nsecs_to_jiffies64((unsigned long)interval *
+					DIM_MINUTE_TO_NSEC);
+	queue_delayed_work(dim_work_queue, &dim_measure_work, jiffies);
 }
 
-int dim_core_measure(int baseline_init)
+static void measure_work_cb(struct work_struct *work)
+{
+	dim_measure_task_measure(DIM_MEASURE, &dim_core_handle);
+	queue_delayed_measure_work();
+}
+
+static void baseline_work_cb(struct work_struct *work)
+{
+	dim_measure_task_measure(DIM_BASELINE, &dim_core_handle);
+	queue_delayed_measure_work();
+}
+
+/* trigger a measurement and wait for it to complete */
+int dim_core_measure_blocking(void)
+{
+	int ret = 0;
+
+	if (!mutex_trylock(&dim_core_measure_lock))
+		return -EBUSY;
+
+	/* clean the running work */
+	flush_delayed_work(&dim_measure_work);
+	cancel_delayed_work_sync(&dim_measure_work);
+	/* queue and flush measure work */
+	queue_delayed_work(dim_work_queue, &dim_measure_work, 0);
+	flush_delayed_work(&dim_measure_work);
+
+	/* check error status */
+	if (dim_measure_status_error(&dim_core_handle))
+		ret = -EFAULT;
+
+	mutex_unlock(&dim_core_measure_lock);
+	return ret;
+}
+
+/* trigger a dynamic baseline and wait for it to complete */
+int dim_core_baseline_blocking(void)
 {
 	int ret = 0;
 
@@ -181,124 +175,79 @@ int dim_core_measure(int baseline_init)
 	flush_delayed_work(&dim_measure_work);
 	cancel_delayed_work_sync(&dim_measure_work);
 
-	if (dim_core_status_get() == DIM_NO_BASELINE)
-		baseline_init = 1;
+	/* queue and flush baseline work */
+	queue_work(dim_work_queue, &dim_baseline_work);
+	flush_work(&dim_baseline_work);
 
-	if (baseline_init) {
-		mutex_lock(&dim_core_baseline_lock);
-		dim_core_status_set(DIM_BASELINE_RUNNING);
-		ret = do_baseline();
-		mutex_unlock(&dim_core_baseline_lock);
-		if (ret < 0)
-			goto out;
-	} else {
-		dim_core_status_set(DIM_MEASURE_RUNNING);
-	}
+	/* check error status */
+	if (dim_measure_status_error(&dim_core_handle))
+		ret = -EFAULT;
 
-	queue_delayed_work(dim_work_queue, &dim_measure_work, 0);
-	flush_delayed_work(&dim_measure_work);
-out:
-	dim_core_status_set(ret < 0 ? DIM_ERROR : DIM_PROTECTED);
 	mutex_unlock(&dim_core_measure_lock);
 	return ret;
 }
 
-int dim_core_measure_init(const char *alg_name)
+int dim_core_measure_init(struct dim_measure_cfg *cfg, unsigned int interval)
 {
 	int ret = 0;
 
-	/* 1. check the measure parameter */
-	if (measure_log_capacity < MEASURE_LOG_CAP_MIN ||
-	    measure_log_capacity > MEASURE_LOG_CAP_MAX) {
-		dim_err("invalid measure_log_capacity parameter\n");
-		return -ERANGE;
-	}
+	/* set the special baseline memory functions */
+	cfg->dyn_malloc = dim_mem_pool_alloc;
+	cfg->dyn_free = dim_mem_pool_free;
 
-	if (measure_schedule > MEASURE_SCHEDULE_MAX) {
-		dim_err("invalid measure_schedule parameter\n");
-		return -ERANGE;
-	}
-
-	if (measure_interval > DIM_INTERVAL_MAX) {
-		dim_err("invalid measure_interval parameter\n");
-		return -ERANGE;
-	}
-
-	if (measure_pcr > DIM_PCR_MAX) {
-		dim_err("invalid measure_pcr parameter\n");
-		return -ERANGE;
-	}
-
-	/* 2. init measure hash algorithm */
-	ret = dim_hash_init(alg_name, &dim_core_hash);
+	/* init the measurement handle */
+	ret = dim_measure_init(&dim_core_handle, cfg);
 	if (ret < 0) {
-		dim_err("failed to initialize hash algorithm: %d\n", ret);
+		dim_err("failed to init measurement handle\n");
+		return ret;
+	}
+
+	/* set the baseline prepare function */
+	dim_core_handle.baseline_prepare = baseline_prepare;
+
+	/* register all measurement tasks */
+	ret = dim_measure_tasks_register(&dim_core_handle, dim_core_tasks,
+					 DIM_ARRAY_LEN(dim_core_tasks));
+	if (ret < 0) {
+		dim_err("failed to register measure tasks: %d\n", ret);
 		goto err;
 	}
 
-	/* 3. init TPM, dont break if init fail */
-	if (measure_pcr > 0) {
-		ret = dim_tpm_init(&dim_core_tpm, HASH_ALGO_SHA256);
-		if (ret < 0)
-			dim_warn("failed to initialize tpm chip: %d\n", ret);
-	}
-
-	/* 4. init measurement status */
-	ret = dim_core_status_init();
-	if (ret < 0) {
-		dim_err("failed to initialize dim status: %d\n", ret);
-		goto err;
-	}
-
-	/* 5. init baseline data (static and dynamic) */
-	ret = dim_core_baseline_init();
-	if (ret < 0) {
-		dim_err("failed to initialize dim baseline: %d\n", ret);
-		goto err;
-	}
-
-	/* 6. init measure log */
-	ret = dim_measure_log_init_tree(&dim_core_log,
-					&dim_core_hash, &dim_core_tpm,
-					measure_log_capacity, measure_pcr);
-	if (ret < 0) {
-		dim_err("failed to initialize measure log root: %d\n", ret);
-		goto err;
-	}
-
-	/* 7. init measure work thread */
-	INIT_DELAYED_WORK(&dim_measure_work, dim_worker_work_cb);
+	/* init the measurement working thread */
 	dim_work_queue = create_singlethread_workqueue("dim_core");
 	if (dim_work_queue == NULL) {
 		ret = -ENOMEM;
 		dim_err("failed to create dim work queue: %d\n", ret);
 		goto err;
 	}
-	
-	/* 8. if the interval is set, start to do baseline and measure */
-	if (measure_interval) {
-		ret = dim_core_measure(1);
+
+	/* init the measurement work */
+	INIT_WORK(&dim_baseline_work, baseline_work_cb);
+	INIT_DELAYED_WORK(&dim_measure_work, measure_work_cb);
+
+	/* if the interval is set, start to do baseline and measure */
+	if (interval) {
+		ret = dim_core_baseline_blocking();
 		if (ret < 0) {
 			dim_err("failed to do baseline init: %d\n", ret);
 			goto err;
 		}
 
-		dim_core_interval_set(measure_interval);
+		ret = dim_core_interval_set(interval);
+		if (ret < 0)
+			dim_warn("failed to set measure interval: %d\n", ret);
 	}
-
-	if (measure_schedule)
-		measure_schedule_jiffies = msecs_to_jiffies(measure_schedule);
 
 	return 0;
 err:
-	dim_hash_destroy(&dim_core_hash);
-	dim_tpm_destroy(&dim_core_tpm);
-	dim_core_baseline_destroy();
-	dim_measure_log_destroy_tree(&dim_core_log);
+	dim_measure_destroy(&dim_core_handle);
+	if (dim_work_queue != NULL)
+		destroy_workqueue(dim_work_queue);
+
 	return ret;
 }
 
-void dim_core_destroy_measure(void)
+void dim_core_measure_destroy(void)
 {
 	mutex_lock(&dim_core_measure_lock);
 	if (dim_work_queue != NULL) {
@@ -309,9 +258,7 @@ void dim_core_destroy_measure(void)
 		destroy_workqueue(dim_work_queue);
 	}
 
-	dim_measure_log_destroy_tree(&dim_core_log);
-	dim_core_baseline_destroy();
+	dim_measure_destroy(&dim_core_handle);
 	dim_core_policy_destroy();
-	dim_tpm_destroy(&dim_core_tpm);
-	dim_hash_destroy(&dim_core_hash);
+	mutex_unlock(&dim_core_measure_lock);
 }

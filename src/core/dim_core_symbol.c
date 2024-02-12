@@ -6,8 +6,8 @@
 #include <linux/jump_label.h>
 
 #include "dim_symbol.h"
+#include "dim_utils.h"
 
-#include "dim_core.h"
 #include "dim_core_symbol.h"
 
 struct dim_core_kallsyms dim_core_kernel_symbol;

@@ -6,26 +6,25 @@
 
 #include "dim_utils.h"
 
-#include "dim_core.h"
 #include "dim_core_measure.h"
-#include "dim_core_status.h"
 #include "dim_core_fs.h"
 
 /*
  * measure trigger interface
  * dim_entry struct: dim_measure_entry
  * file entry name: measure
- * function: dim_core_measure(0)
+ * function: dim_core_measure_blocking()
  */
-dim_trigger_entry(dim_measure, measure, dim_core_measure, 0);
+dim_trigger_entry(dim_measure, measure, dim_core_measure_blocking);
 
 /*
  * baseline_init trigger interface
  * dim_entry struct: dim_baseline_init_entry
  * file entry name: baseline_init
- * function: dim_core_measure(1)
+ * function: dim_core_baseline_blocking(0)
  */
-dim_trigger_entry(dim_baseline_init, baseline_init, dim_core_measure, 1);
+dim_trigger_entry(dim_baseline_init, baseline_init,
+		  dim_core_baseline_blocking);
 
 /*
  * measure log read interface
@@ -33,17 +32,16 @@ dim_trigger_entry(dim_baseline_init, baseline_init, dim_core_measure, 1);
  * file entry name: runtime_status
  * status to read: dim_measure_log_tree
  */
-dim_measure_log_entry(dim_measure_log,
-		      ascii_runtime_measurements,
-		      &dim_core_log);
+dim_measure_log_entry(dim_measure_log, ascii_runtime_measurements,
+		      &dim_core_handle.log);
 
 /*
- * status read interface
+ * status print interface
  * dim_entry struct: dim_status_entry
- * file entry name: ascii_runtime_measurements
- * data to read: dim_core_status
+ * file entry name: runtime_status
+ * print function: dim_core_status_print
  */
-dim_status_entry(dim_status, runtime_status, &dim_core_status);
+dim_string_print_entry(dim_status, runtime_status, dim_core_status_print);
 
 /*
  * measure interval set and read interface
@@ -52,8 +50,7 @@ dim_status_entry(dim_status, runtime_status, &dim_core_status);
  * read function: dim_core_interval_get
  * write function: dim_core_interval_set
  */
-dim_uint_rw_entry(dim_interval, interval,
-		  dim_core_interval_get,
+dim_uint_rw_entry(dim_interval, interval, dim_core_interval_get,
 		  dim_core_interval_set);
 
 #ifdef DIM_CORE_TAMPERED_ACTION
@@ -64,10 +61,8 @@ dim_uint_rw_entry(dim_interval, interval,
  * read function: dim_core_tampered_action_get
  * write function: dim_core_tampered_action_set
  */
-dim_uint_rw_entry(dim_tampered_action,
-		  tampered_action,
-		  dim_core_tampered_action_get,
-		  dim_core_tampered_action_set);
+dim_uint_rw_entry(dim_tampered_action, tampered_action,
+		  dim_core_tampered_action_get, dim_core_tampered_action_set);
 #endif
 
 /*

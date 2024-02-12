@@ -14,7 +14,6 @@
 #include "dim_utils.h"
 #include "dim_rb.h"
 
-#include "dim_core.h"
 #include "dim_core_sig.h"
 #include "dim_core_policy.h"
 
@@ -67,7 +66,7 @@ static int policy_add(int obj, int key, const char *val, int action)
 	int ret = 0;
 	struct dim_policy *policy = NULL;
 
-	policy = kmalloc(sizeof(struct dim_policy), GFP_KERNEL);
+	policy = dim_kmalloc_gfp(sizeof(struct dim_policy));
 	if (policy == NULL)
 		return -ENOMEM;
 
@@ -112,7 +111,7 @@ static int policy_add_path(const char *path, int action)
 		return ret;
 
 	/* Try to get the absolute path */
-	path_buf = kmalloc(PATH_MAX, GFP_KERNEL);
+	path_buf = dim_kmalloc_gfp(PATH_MAX);
 	if (path_buf == NULL)
 		return -ENOMEM;
 

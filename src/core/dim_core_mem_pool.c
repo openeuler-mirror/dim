@@ -4,7 +4,8 @@
 
 #include <linux/mm.h>
 
-#include "dim_core.h"
+#include "dim_utils.h"
+
 #include "dim_core_mem_pool.h"
 
 static struct gen_pool *dim_pool = NULL;

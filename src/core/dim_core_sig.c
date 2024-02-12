@@ -14,7 +14,6 @@
 #include "dim_hash.h"
 #include "dim_utils.h"
 
-#include "dim_core.h"
 #include "dim_core_sig.h"
 
 static struct key *dim_core_keyring = NULL;
@@ -27,7 +26,7 @@ static char *add_suffix(const char *str, const char *suffix)
 	char *buf = NULL;
 
 	len = strlen(str) + strlen(suffix) + 1;
-	buf = kmalloc(len, GFP_KERNEL);
+	buf = dim_kmalloc_gfp(len);
 	if (buf == NULL)
 		return NULL;
 

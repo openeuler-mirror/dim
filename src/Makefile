@@ -8,23 +8,24 @@ dim_core-objs += core/dim_core_fs.o
 dim_core-objs += core/dim_core_mem_pool.o
 dim_core-objs += core/dim_core_policy.o
 dim_core-objs += core/dim_core_static_baseline.o
-dim_core-objs += core/dim_core_baseline.o
 dim_core-objs += core/dim_core_measure.o
-dim_core-objs += core/dim_core_measure_task.o
-dim_core-objs += core/dim_core_measure_module.o
-dim_core-objs += core/dim_core_measure_kernel.o
-dim_core-objs += core/dim_core_measure_common.o
-dim_core-objs += core/dim_core_status.o
 dim_core-objs += core/dim_core_symbol.o
 dim_core-objs += core/dim_core_sig.o
+dim_core-objs += core/measure_task/dim_core_measure_kernel.o
+dim_core-objs += core/measure_task/dim_core_measure_module.o
+dim_core-objs += core/measure_task/dim_core_measure_task.o
 dim_core-objs += common/dim_entry.o
 dim_core-objs += common/dim_utils.o
 dim_core-objs += common/dim_baseline.o
 dim_core-objs += common/dim_hash.o
 dim_core-objs += common/dim_measure_log.o
-dim_core-objs += common/dim_status.o
 dim_core-objs += common/dim_tpm.o
 dim_core-objs += common/dim_symbol.o
+dim_core-objs += measure/dim_measure.o
+dim_core-objs += measure/dim_measure_baseline.o
+dim_core-objs += measure/dim_measure_task.o
+dim_core-objs += measure/dim_measure_utils.o
+dim_core-objs += measure/dim_measure_status.o
 
 dim_monitor-objs += monitor/dim_monitor_main.o
 dim_monitor-objs += monitor/dim_monitor_fs.o
@@ -32,16 +33,26 @@ dim_monitor-objs += monitor/dim_monitor_measure.o
 dim_monitor-objs += monitor/dim_monitor_symbol.o
 dim_monitor-objs += common/dim_entry.o
 dim_monitor-objs += common/dim_hash.o
-dim_monitor-objs += common/dim_status.o
 dim_monitor-objs += common/dim_utils.o
 dim_monitor-objs += common/dim_measure_log.o
 dim_monitor-objs += common/dim_baseline.o
 dim_monitor-objs += common/dim_tpm.o
 dim_monitor-objs += common/dim_symbol.o
+dim_monitor-objs += measure/dim_measure.o
+dim_monitor-objs += measure/dim_measure_baseline.o
+dim_monitor-objs += measure/dim_measure_task.o
+dim_monitor-objs += measure/dim_measure_utils.o
+dim_monitor-objs += measure/dim_measure_status.o
+dim_monitor-objs += monitor/measure_task/dim_monitor_measure_data.o
+dim_monitor-objs += monitor/measure_task/dim_monitor_measure_text.o
 
+# TODO
 ccflags-y := -I$(src)/core
+ccflags-y += -I$(src)/core/measure_task
 ccflags-y += -I$(src)/monitor
+ccflags-y += -I$(src)/monitor/measure_task
 ccflags-y += -I$(src)/common
+ccflags-y += -I$(src)/measure
 
 EXTRA_CFLAGS += -Wall -Werror -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong
 
@@ -61,3 +72,6 @@ install:
 	rmmod -f dim_core || :
 	insmod dim_core.ko
 	insmod dim_monitor.ko
+
+test:
+	cd ../test && { sh test_dim_core.sh; sh test_dim_monitor.sh; }
