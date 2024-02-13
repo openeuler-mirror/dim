@@ -86,7 +86,7 @@ static int baseline_prepare(struct dim_measure *m)
 	dim_baseline_destroy_tree(&m->dynamic_baseline);
 
 	/* 3. reload dim baseline */
-	ret = dim_core_static_baseline_load();
+	ret = dim_core_static_baseline_load(m);
 	if (ret < 0) {
 		dim_err("failed to load dim static baseline: %d\n", ret);
 		dim_core_policy_destroy();
