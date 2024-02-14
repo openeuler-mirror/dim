@@ -120,6 +120,10 @@ static void measure_work_cb(struct work_struct *work)
 static void baseline_work_cb(struct work_struct *work)
 {
 	dim_measure_task_measure(DIM_BASELINE, &dim_core_handle);
+	/* if baseline is failed, dont perform measurement */
+	if (dim_measure_status_error(&dim_core_handle))
+		return;
+
 	queue_delayed_measure_work();
 }
 
