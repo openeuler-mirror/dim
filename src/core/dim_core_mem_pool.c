@@ -112,7 +112,7 @@ out:
 	return data->data;
 }
 
-void dim_mem_pool_free(void *data)
+void dim_mem_pool_free(const void *data)
 {
 	struct dim_pool_mem *mem = NULL;
 

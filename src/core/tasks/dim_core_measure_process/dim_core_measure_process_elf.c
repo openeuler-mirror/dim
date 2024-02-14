@@ -57,7 +57,7 @@ static int get_elf_phdrs(struct file *elf_file, struct elfhdr *ehdr,
 		return -ENOEXEC;
 
 	phdr_size = sizeof(struct elf_phdr) * ehdr->e_phnum;
-	elf_phdata = dim_kmalloc_gfp(phdr_size);
+	elf_phdata = dim_kzalloc_gfp(phdr_size);
 	if (elf_phdata == NULL)
 		return -ENOMEM;
 
@@ -89,7 +89,7 @@ static int get_elf_section(struct file *elf_file, struct elfhdr *ehdr,
 	if (ehdr->e_shentsize != sizeof(struct elf_shdr))
 		return -EBADF;
 
-	sh_table = dim_kmalloc_gfp(ehdr->e_shentsize);
+	sh_table = dim_kzalloc_gfp(ehdr->e_shentsize);
 	if (sh_table == NULL)
 		return -ENOMEM;
 
@@ -103,21 +103,21 @@ static int get_elf_section(struct file *elf_file, struct elfhdr *ehdr,
 
 	str_size = sh_table->sh_size;
 	if (str_size > i_size_read(file_inode(elf_file))) {
-		kfree(sh_table);
+		dim_kfree(sh_table);
 		return -EBADF;
 	}
 
-	sh_str = vmalloc(str_size);
+	sh_str = dim_vzalloc(str_size);
 	if (sh_str == NULL) {
-		kfree(sh_table);
+		dim_kfree(sh_table);
 		return -ENOMEM;
 	}
 
 	pos = sh_table->sh_offset;
 	size = kernel_read(elf_file, sh_str, sh_table->sh_size, &pos);
 	if (size != sh_table->sh_size) {
-		kfree(sh_table);
-		vfree(sh_str);
+		dim_kfree(sh_table);
+		dim_vfree(sh_str);
 		return size < 0 ? (int)size : -EBADF;
 	}
 
@@ -135,15 +135,15 @@ static int get_elf_section(struct file *elf_file, struct elfhdr *ehdr,
 		    sh_table->sh_name + name_len >= str_size)
 		    	break;
 
-		if (strcmp(name, sh_str + sh_table->sh_name) == 0) {
+		if (dim_strcmp(name, sh_str + sh_table->sh_name) == 0) {
 			memcpy(shdr, sh_table, sizeof(struct elf_shdr));
 			ret = 0;
 			break;
 		}
 	}
 
-	kfree(sh_table);
-	vfree(sh_str);
+	dim_kfree(sh_table);
+	dim_vfree(sh_str);
 	return ret;
 }
 
@@ -179,7 +179,7 @@ static int get_elf_text_phdrs(struct file *elf_file,
 	}
 
 	/* alloc memory buffer for phdrs */
-	phdrs_text = dim_kmalloc_gfp(phdrs_text_num * sizeof(struct elf_phdr));
+	phdrs_text = dim_kzalloc_gfp(phdrs_text_num * sizeof(struct elf_phdr));
 	if (phdrs_text == NULL) {
 		dim_kfree(phdrs_get);
 		return -ENOMEM;

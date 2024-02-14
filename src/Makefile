@@ -34,6 +34,7 @@ dim_core-objs += common/dim_hash.o
 dim_core-objs += common/dim_measure_log.o
 dim_core-objs += common/dim_tpm.o
 dim_core-objs += common/dim_symbol.o
+dim_core-objs += common/dim_safe_func.o
 dim_core-objs += measure/dim_measure.o
 dim_core-objs += measure/dim_measure_baseline.o
 dim_core-objs += measure/dim_measure_task.o
@@ -55,6 +56,7 @@ dim_monitor-objs += common/dim_measure_log.o
 dim_monitor-objs += common/dim_baseline.o
 dim_monitor-objs += common/dim_tpm.o
 dim_monitor-objs += common/dim_symbol.o
+dim_monitor-objs += common/dim_safe_func.o
 dim_monitor-objs += measure/dim_measure.o
 dim_monitor-objs += measure/dim_measure_baseline.o
 dim_monitor-objs += measure/dim_measure_task.o
@@ -72,6 +74,8 @@ ccflags-y += -I$(src)/common
 ccflags-y += -I$(src)/measure
 
 ccflags-y += -Wall -Werror -D_FORTIFY_SOURCE=2 -O2 -fstack-protector-strong
+# For check memory leakage
+# ccflags-y += -DDIM_DEBUG_MEMORY_LEAK
 
 KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)

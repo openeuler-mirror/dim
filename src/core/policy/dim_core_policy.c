@@ -11,8 +11,9 @@
 #include <linux/namei.h>
 #include <linux/utsname.h>
 
-#include "dim_utils.h"
 #include "dim_rb.h"
+#include "dim_utils.h"
+#include "dim_safe_func.h"
 
 #include "dim_core_sig.h"
 #include "dim_core_policy.h"
@@ -26,13 +27,9 @@ static int dim_policy_compare(struct dim_policy *x, struct dim_policy *y)
 
 	switch (x->obj) {
 	case DIM_POLICY_OBJ_BPRM_TEXT:
-		if (x->path == NULL || y->path == NULL)
-			return -1;
-		return strcmp(x->path, y->path);
+		return dim_strcmp(x->path, y->path);
 	case DIM_POLICY_OBJ_MODULE_TEXT:
-		if (x->name == NULL || y->name == NULL)
-			return -1;
-		return strcmp(x->name, y->name);
+		return dim_strcmp(x->name, y->name);
 	case DIM_POLICY_OBJ_KERNEL_TEXT:
 		return 0;
 	default:
@@ -60,8 +57,8 @@ void policy_destroy(struct dim_policy *policy)
 	if (policy == NULL)
 		return;
 
-	dim_kfree((char *)policy->name);
-	dim_kfree((char *)policy->path);
+	dim_kfree(policy->name);
+	dim_kfree(policy->path);
 	dim_kfree(policy);
 }
 
@@ -100,15 +97,15 @@ static int policy_check_add_bprm_text(struct dim_policy *policy)
 		return 0;
 	}
 
-	if (strcmp(apath, policy->path) == 0) {
+	if (dim_strcmp(apath, policy->path) == 0) {
 		/* the two paths are same, no need to add another policy */
-		dim_kfree((char *)apath);
+		dim_kfree(apath);
 		return 0;
 	}
 
-	p = kmemdup(policy, sizeof(struct dim_policy), GFP_KERNEL);
+	p = dim_kmemdup_gfp(policy, sizeof(struct dim_policy));
 	if (p == NULL) {
-		dim_kfree((char *)apath);
+		dim_kfree(apath);
 		return -ENOMEM;
 	}
 
@@ -191,7 +188,7 @@ int dim_core_policy_load(void)
 		dim_core_policy_destroy();
 	}
 
-	vfree(buf);
+	dim_vfree(buf);
 	return ret;
 }
 

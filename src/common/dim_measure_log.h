@@ -7,7 +7,9 @@
 
 #include <linux/list.h>
 #include <linux/rbtree.h>
+
 #include "dim_hash.h"
+#include "dim_safe_func.h"
 
 #define DIM_NG "dim-ng"
 #define LOG_MAX_LENGTH_PCR 3
@@ -61,7 +63,7 @@ struct dim_measure_log {
 static inline int dim_measure_name_compare(struct dim_measure_name *x,
 					   struct dim_measure_name *y)
 {
-	return strcmp(x->name, y->name);
+	return dim_strcmp(x->name, y->name);
 }
 
 static inline const char *dim_measure_log_type_to_name(int type)

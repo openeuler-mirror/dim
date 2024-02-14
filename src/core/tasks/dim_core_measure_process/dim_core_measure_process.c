@@ -60,9 +60,8 @@ static int store_task_tree(struct task_struct *p, void *data)
 
 		/* realloc to size * 2 */
 		new_size = ctx->size << 1;
-		tmp = krealloc(ctx->buf,
-			       new_size * sizeof(struct task_struct *),
-			       GFP_ATOMIC);
+		tmp = dim_krealloc_atom(ctx->buf,
+				new_size * sizeof(struct task_struct *));
 		if (tmp == NULL)
 			return -ENOMEM;
 
@@ -79,7 +78,7 @@ static int kill_task_tree(struct task_struct *tsk)
 	const int def_size = 32;
 	struct task_kill_ctx ctx = { .size = def_size };
 
-	ctx.buf = dim_kmalloc_gfp(def_size * sizeof(struct task_struct *));
+	ctx.buf = dim_kzalloc_gfp(def_size * sizeof(struct task_struct *));
 	if (ctx.buf == NULL)
 		return -ENOMEM;
 
@@ -91,7 +90,7 @@ static int kill_task_tree(struct task_struct *tsk)
 		}
 	}
 
-	kfree(ctx.buf);
+	dim_kfree(ctx.buf);
 	send_sig(SIGKILL, tsk, 1);
 	return 0;
 }
@@ -166,7 +165,6 @@ static void measure_task_module(struct vm_area_struct *vma,
 	ret = measure_process_text(vma, ctx);
 	if (ret < 0)
 		dim_err("failed to measure module file text: %d", ret);
-
 }
 
 static int measure_task(struct task_struct *task, struct task_measure_ctx *ctx)
@@ -238,7 +236,7 @@ static int store_task_pids(pid_t **pid_buf, unsigned int *pid_cnt)
 	unsigned int max_cnt = (PID_MAX_DEFAULT << 1);
 
 	/* maximum processing of PID_MAX_DEFAULT * 2 pids */
-	buf = vmalloc(max_cnt);
+	buf = dim_vzalloc(max_cnt);
 	if (buf == NULL) {
 		dim_err("failed to allocate memory for pid buffer\n");
 		return -ENOMEM;
@@ -294,7 +292,7 @@ static int walk_measure_tasks(struct task_measure_ctx *ctx)
 		}
 	}
 
-	vfree(pid_buf);
+	dim_vfree(pid_buf);
 	return 0;
 }
 
@@ -306,7 +304,7 @@ static int user_text_measure(int mode, struct dim_measure *m)
 	if (m == NULL)
 		return -EINVAL;
 
-	ctx = vmalloc(sizeof(struct task_measure_ctx));
+	ctx = dim_vzalloc(sizeof(struct task_measure_ctx));
 	if (ctx == NULL)
 		return -ENOMEM;
 
@@ -315,7 +313,7 @@ static int user_text_measure(int mode, struct dim_measure *m)
 	ctx->check = check_process_digest;
 
 	ret = walk_measure_tasks(ctx);
-	vfree(ctx);
+	dim_vfree(ctx);
 	return ret;
 }
 

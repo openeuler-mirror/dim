@@ -5,21 +5,9 @@
 #include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/namei.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
 
+#include "dim_safe_func.h"
 #include "dim_utils.h"
-
-void *dim_kmalloc_gfp(size_t size)
-{
-	return kmalloc(size, GFP_KERNEL);
-}
-
-void dim_kfree(void *data)
-{
-	if (data != NULL)
-		kfree(data);
-}
 
 int dim_get_absolute_path(const char *path, const char **result)
 {
@@ -35,7 +23,7 @@ int dim_get_absolute_path(const char *path, const char **result)
 	if (ret < 0)
 		return ret;
 
-	buf = dim_kmalloc_gfp(PATH_MAX);
+	buf = dim_kzalloc_gfp(PATH_MAX);
 	if (buf == NULL) {
 		ret = -ENOMEM;
 		goto out;
@@ -47,16 +35,14 @@ int dim_get_absolute_path(const char *path, const char **result)
 		goto out;
 	}
 
-	*result = kstrdup(apath, GFP_KERNEL);
+	*result = dim_kstrdup_gfp(apath);
 	if (*result == NULL) {
 		ret = -ENOMEM;
 		goto out;
 	}
 out:
 	path_put(&p);
-	if (buf != NULL)
-		dim_kfree(buf);
-
+	dim_kfree(buf);
 	return ret;	
 }
 
@@ -72,7 +58,7 @@ bool dim_string_end_with(const char *str, const char *ext)
 	if (name_len < ext_len)
 		return false;
 
-	return strcmp(str + name_len - ext_len, ext) == 0;
+	return dim_strcmp(str + name_len - ext_len, ext) == 0;
 }
 
 int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data)
@@ -97,7 +83,7 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, vo
 			line = &buf[i + 1];
 		} else {
 			line_len = buf + i - line + 1;
-			line_buf = kzalloc(line_len + 1, GFP_KERNEL);
+			line_buf = dim_kzalloc_gfp(line_len + 1);
 			if (line_buf == NULL)
 				return -ENOMEM;
 
@@ -118,7 +104,7 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, vo
 	}
 out:
 	if (line_buf != NULL)
-		kfree(line_buf);
+		dim_kfree(line_buf);
 
 	return ret;
 }

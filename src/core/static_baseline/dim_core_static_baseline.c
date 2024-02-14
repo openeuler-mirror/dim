@@ -28,12 +28,12 @@ static bool baseline_match_policy(const char *name, int type)
 		return dim_core_policy_match(DIM_POLICY_OBJ_BPRM_TEXT,
 					     DIM_POLICY_KEY_PATH, name);
 
-	if (strcmp(name, kr) == 0)
+	if (dim_strcmp(name, kr) == 0)
 		return dim_core_policy_match(DIM_POLICY_OBJ_KERNEL_TEXT,
 					     DIM_POLICY_KEY_NAME, kr);
 
 	if (name_len <= kr_len + 2 || /* <kernel release>/<mod_name> */
-	    strncmp(kr, name, kr_len) != 0 ||
+	    dim_strncmp(kr, name, kr_len) != 0 ||
 	    *(name + kr_len) != '/')
 		return false;
 
@@ -82,7 +82,7 @@ static_baseline_load(struct dir_context *__ctx,
 		dim_err("failed to parse baseline file %s: %d\n", name, ret);
 out:
 	if (buf != NULL)
-		vfree(buf);
+		dim_vfree(buf);
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 	return 0; /* ignore fail */

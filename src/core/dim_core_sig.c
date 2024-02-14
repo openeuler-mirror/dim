@@ -13,6 +13,7 @@
 
 #include "dim_hash.h"
 #include "dim_utils.h"
+#include "dim_safe_func.h"
 
 #include "dim_core_sig.h"
 
@@ -26,7 +27,7 @@ static char *add_suffix(const char *str, const char *suffix)
 	char *buf = NULL;
 
 	len = strlen(str) + strlen(suffix) + 1;
-	buf = dim_kmalloc_gfp(len);
+	buf = dim_kzalloc_gfp(len);
 	if (buf == NULL)
 		return NULL;
 
@@ -39,10 +40,16 @@ static int read_file_root(struct path *root, const char *name, void **buf)
 	int ret = 0;
 	struct file *file = NULL;
 
-	if (root == NULL)
-		return kernel_read_file_from_path(name, 0, buf,
+	if (root == NULL) {
+		ret = kernel_read_file_from_path(name, 0, buf,
 						  DIM_CORE_MAX_FILE_SIZE,
 						  NULL, READING_UNKNOWN);
+#ifdef DIM_DEBUG_MEMORY_LEAK
+		if (*buf != NULL)
+			dim_alloc_debug_inc();
+#endif
+		return ret;
+	}
 
 	file = file_open_root(root, name, O_RDONLY, 0);
 	if (IS_ERR(file))
@@ -50,6 +57,10 @@ static int read_file_root(struct path *root, const char *name, void **buf)
 
 	ret = kernel_read_file(file, 0, buf, DIM_CORE_MAX_FILE_SIZE,
 			       NULL, READING_UNKNOWN);
+#ifdef DIM_DEBUG_MEMORY_LEAK
+	if (*buf != NULL)
+		dim_alloc_debug_inc();
+#endif
 	(void)filp_close(file, NULL);
 	return ret;
 }
@@ -114,12 +125,10 @@ int dim_read_verify_file(struct path *root, const char *name, void **buf)
 	sig_size = ret;
 	ret = dim_core_sig_verify(file_buf, file_size, sig_buf, sig_size);
 out:
-	if (sig_name != NULL)
-		kfree(sig_name);
-	if (sig_buf != NULL)
-		vfree(sig_buf);
-	if (file_buf != NULL && ret < 0)
-		vfree(file_buf);
+	dim_kfree(sig_name);
+	dim_vfree(sig_buf);
+	if (ret < 0)
+		dim_vfree(file_buf);
 	if (ret == 0) {
 		*buf = file_buf;
 		ret = file_size;
@@ -172,8 +181,7 @@ int dim_core_sig_init(void)
 	dim_info("load DIM cert: %s\n", dim_core_key->description);
 	ret = 0;
 err:
-	if (data != NULL)
-		vfree(data);
+	dim_vfree(data);
 	if (ret < 0)
 		key_put(dim_core_keyring);
 	return ret;

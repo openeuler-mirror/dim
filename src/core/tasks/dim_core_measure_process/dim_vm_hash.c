@@ -7,6 +7,7 @@
 #include <linux/highmem.h>
 
 #include "dim_utils.h"
+#include "dim_safe_func.h"
 
 #include "dim_vm_hash.h"
 
@@ -26,7 +27,7 @@ int dim_vm_hash_update_address(struct mm_struct *mm,
 	if (mm == NULL || addr_len == 0 || shash == NULL)
 		return -EINVAL;
 
-	pages = vzalloc(nr_pages * sizeof(struct page *));
+	pages = dim_vzalloc(nr_pages * sizeof(struct page *));
 	if (pages == NULL)
 		return -ENOMEM;
 
@@ -38,7 +39,7 @@ int dim_vm_hash_update_address(struct mm_struct *mm,
 #endif
 	if (ret_pages < 0) {
 		dim_err("failed to get remote pages: %ld\n", ret_pages);
-		vfree(pages);
+		dim_vfree(pages);
 		return ret_pages;
 	} else if (ret_pages != nr_pages) {
 		dim_warn("failed to get all remote pages\n");
@@ -64,7 +65,7 @@ int dim_vm_hash_update_address(struct mm_struct *mm,
 		put_page(pages[i]);
 	}
 
-	vfree(pages);
+	dim_vfree(pages);
 	return 0;
 }
 

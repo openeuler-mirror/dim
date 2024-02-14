@@ -16,7 +16,7 @@ static const char *process_static_name(const char *name, int type,
 {
 	const char *kr = init_uts_ns.name.release;
 
-	if (type != DIM_BASELINE_KERNEL || strcmp(name, kr) == 0)
+	if (type != DIM_BASELINE_KERNEL || dim_strcmp(name, kr) == 0)
 		return name;
 
 	/* name of kernel module has a kernel prefix in static baseline */
@@ -101,7 +101,7 @@ static int measure_log_add(struct dim_measure *m, const char *name,
 
 /* check dynamic measurement result in baseline stage */
 static int process_dynamic_baseline(struct dim_measure *m, const char *name,
-				    struct dim_digest *digest, int *log_flag) // TODO
+				    struct dim_digest *digest, int *log_flag)
 {
 	int ret = 0;
 	struct dim_digest digest_static = { 0 };
@@ -134,7 +134,7 @@ static int process_dynamic_measure(struct dim_measure *m, const char *name,
 
 	if(!dynamic_baseline_match(m, name, DIM_BASELINE_KERNEL, digest)) {
 		dim_err("mismatch dynamic baseline of kernel %s\n", name);
-		if (log_flag != NULL) // TODO
+		if (log_flag != NULL)
 			*log_flag = LOG_TAMPERED;
 
 		return measure_log_add(m, name, digest, LOG_TAMPERED);
@@ -165,7 +165,7 @@ static int process_static_baseline(struct dim_measure *m, const char *name,
 		return measure_log_add(m, name, digest, LOG_STATIC_BASELINE);
 
 	dim_warn("mismatch static baseline of user process %s\n", name);
-	if (log_flag != NULL) // TODO
+	if (log_flag != NULL)
 		*log_flag = LOG_TAMPERED;
 
 	return measure_log_add(m, name, digest, LOG_TAMPERED);
@@ -177,7 +177,7 @@ static int process_static_measure(struct dim_measure *m, const char *name,
 {
 	if(!dynamic_baseline_match(m, name, DIM_BASELINE_USER, digest)) {
 		dim_err("mismatch dynamic baseline of user %s\n", name);
-		if (log_flag != NULL) // TODO
+		if (log_flag != NULL)
 			*log_flag = LOG_TAMPERED;
 
 		return measure_log_add(m, name, digest, LOG_TAMPERED);

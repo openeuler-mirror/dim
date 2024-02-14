@@ -4,7 +4,9 @@
 
 #include <linux/slab.h>
 
+#include "dim_rb.h"
 #include "dim_utils.h"
+#include "dim_safe_func.h"
 
 #include "dim_core_policy.h"
 
@@ -41,7 +43,7 @@ static const char *dim_policy_action_str[DIM_POLICY_KEY_LAST] = {
 
 static const char *policy_get_string_value(const char *s)
 {
-	return kstrdup(s, GFP_KERNEL);
+	return dim_kstrdup_gfp(s);
 }
 
 static int policy_get_action(const char *s)
@@ -121,7 +123,7 @@ static int parse_line(char *line_str, struct dim_policy *policy)
 	char *p = NULL;
 
 	if ((p = strsep(&line_str, " ")) == NULL ||
-	    strcmp(p, DIM_POLICY_MEASURE) != 0) {
+	    dim_strcmp(p, DIM_POLICY_MEASURE) != 0) {
 		dim_err("invalid policy prefix, must start with %s\n",
 			DIM_POLICY_MEASURE);
 		return -EINVAL;
@@ -156,14 +158,13 @@ static int policy_parse_line(char* line, int line_no, void *data)
 		return -EINVAL;
 	}
 
-	policy = dim_kmalloc_gfp(sizeof(struct dim_policy));
+	policy = dim_kzalloc_gfp(sizeof(struct dim_policy));
 	if (policy == NULL)
 		return -ENOMEM;
 
-	memset(policy, 0, sizeof(struct dim_policy));
-
 	ret = parse_line(line, policy);
 	if (ret < 0) {
+		policy_destroy(policy);
 		dim_err("fail to parse policy at line %d: %d\n", line_no, ret);
 		return ret;
 	}

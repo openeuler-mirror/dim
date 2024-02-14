@@ -4,6 +4,7 @@
 
 #include <linux/crypto.h>
 
+#include "dim_safe_func.h"
 #include "dim_tpm.h"
 
 int dim_tpm_init(struct dim_tpm *tpm, int algo)
@@ -15,8 +16,8 @@ int dim_tpm_init(struct dim_tpm *tpm, int algo)
 	if (tpm->chip == NULL)
 		return -ENODEV;
 
-	tpm->digests = kcalloc(tpm->chip->nr_allocated_banks,
-			       sizeof(struct tpm_digest), GFP_KERNEL);
+	tpm->digests = dim_kcalloc_gfp(tpm->chip->nr_allocated_banks,
+				       sizeof(struct tpm_digest));
 	if (tpm->digests == NULL) {
 		ret = -ENOMEM;
 		goto err;
@@ -40,7 +41,7 @@ int dim_tpm_init(struct dim_tpm *tpm, int algo)
 err:
 	put_device(&tpm->chip->dev);
 	if (tpm->digests != NULL) {
-		kfree(tpm->digests);
+		dim_kfree(tpm->digests);
 		tpm->digests = NULL;
 	}
 
@@ -72,5 +73,5 @@ void dim_tpm_destroy(struct dim_tpm *tpm)
 		return;
 
 	put_device(&tpm->chip->dev);
-	kfree(tpm->digests);
+	dim_kfree(tpm->digests);
 }

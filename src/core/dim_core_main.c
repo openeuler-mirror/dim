@@ -4,6 +4,8 @@
 
 #include <linux/module.h>
 
+#include "dim_safe_func.h"
+
 #include "dim_core_policy.h"
 #include "dim_core_symbol.h"
 #include "dim_core_fs.h"
@@ -99,6 +101,10 @@ static void __exit dim_core_exit(void)
 
 	if (signature)
 		dim_core_sig_destroy();
+
+#ifdef DIM_DEBUG_MEMORY_LEAK
+	dim_check_memory_leak();
+#endif
 }
 
 module_init(dim_core_init);

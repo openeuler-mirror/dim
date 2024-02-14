@@ -9,7 +9,7 @@
 #include "dim_hash.h"
 
 typedef void *(*malloc_func)(size_t);
-typedef void (*free_func)(void*);
+typedef void (*free_func)(const void*);
 
 enum dim_baseline_type {
 	DIM_BASELINE_USER, /* baseline of user process */

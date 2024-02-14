@@ -37,7 +37,7 @@ static int parse_line(char* line, int line_no, void *data)
 	}
 
 	if ((p = strsep(&line_str, " ")) == NULL ||
-	    strcmp(p, DIM_STATIC_BASELINE_PREFIX) != 0) {
+	    dim_strcmp(p, DIM_STATIC_BASELINE_PREFIX) != 0) {
 		dim_warn("invalid baseline prefix at line %d\n", line_no);
 		return 0;
 	}
