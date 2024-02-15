@@ -4,6 +4,7 @@
 
 #include <linux/kallsyms.h>
 
+#include "dim_safe_func.h"
 #include "dim_symbol.h"
 
 static int find_kernel_symbol(unsigned long addr,
@@ -34,7 +35,7 @@ DIM_SYMBOL_LOOKUP_FUNC dim_get_symbol_lookup_func(void)
 		if (ret < 0 || offset > size)
 			break;
 
-		if (strcmp(symbol_name, DIM_KALLSYMS_LOOKUP_NAME) == 0)
+		if (dim_strcmp(symbol_name, DIM_KALLSYMS_LOOKUP_NAME) == 0)
 			return (DIM_SYMBOL_LOOKUP_FUNC)(kaddr - offset);
 
 		if (kaddr == next) {

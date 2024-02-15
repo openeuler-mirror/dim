@@ -25,7 +25,7 @@ typedef void (*pool_chunk_visitor)(struct gen_pool *,
 int dim_mem_pool_init(void);
 void dim_mem_pool_destroy(void);
 void *dim_mem_pool_alloc(size_t size);
-void dim_mem_pool_free(void *data);
+void dim_mem_pool_free(const void *data);
 void dim_mem_pool_walk_chunk(pool_chunk_visitor f, void *data);
 
 #endif

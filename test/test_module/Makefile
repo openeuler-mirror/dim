@@ -2,15 +2,15 @@
 
 obj-m := dim_test_module_demo.o
 
-KERNEL := $(DESTDIR)/lib/modules/$(shell uname -r)/build
-CONFIG_MODULE_SIG=n
-
+KERNEL_SRC ?= /lib/modules/$(shell uname -r)/build
 PWD := $(shell pwd)
 
-modules :
-	$(MAKE) -C $(KERNEL) M=$(PWD) modules
+.PHONY: all modules clean
 
-.PHONEY:clean
+all: modules
 
-clean :
-	$(MAKE) -C $(KERNEL) SUBDIRS=$(PWD) clean
+modules:
+	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) modules
+
+clean:
+	$(MAKE) -C $(KERNEL_SRC) M=$(PWD) clean

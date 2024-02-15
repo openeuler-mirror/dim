@@ -57,6 +57,10 @@ static void __exit dim_monitor_exit(void)
 {
 	dim_monitor_measure_destroy();
 	dim_monitor_destroy_fs();
+
+	#ifdef DIM_DEBUG_MEMORY_LEAK
+		dim_check_memory_leak();
+	#endif
 }
 
 module_init(dim_monitor_init);

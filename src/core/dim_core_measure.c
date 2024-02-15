@@ -30,7 +30,6 @@ static struct work_struct dim_baseline_work;
 
 /* special measurement parameters for dim_core */
 static atomic_t measure_interval = ATOMIC_INIT(0);
-static atomic_t tampered_action = ATOMIC_INIT(0);
 
 /* interface to print measure status string */
 const char *dim_core_status_print(void)
@@ -68,22 +67,6 @@ int dim_core_interval_set(unsigned int min)
 	return 0;
 }
 
-/* interface to get tamper action flag */
-long dim_core_tampered_action_get(void)
-{
-	return atomic_read(&tampered_action);
-}
-
-/* interface to set tamper action flag */
-int dim_core_tampered_action_set(unsigned int p)
-{
-	if (p != 0 && p != 1)
-		return -EINVAL;
-
-	atomic_set(&tampered_action, p);
-	return 0;
-}
-
 static int baseline_prepare(struct dim_measure *m)
 {
 	int ret = 0;
@@ -103,7 +86,7 @@ static int baseline_prepare(struct dim_measure *m)
 	dim_baseline_destroy_tree(&m->dynamic_baseline);
 
 	/* 3. reload dim baseline */
-	ret = dim_core_static_baseline_load();
+	ret = dim_core_static_baseline_load(m);
 	if (ret < 0) {
 		dim_err("failed to load dim static baseline: %d\n", ret);
 		dim_core_policy_destroy();
@@ -137,6 +120,10 @@ static void measure_work_cb(struct work_struct *work)
 static void baseline_work_cb(struct work_struct *work)
 {
 	dim_measure_task_measure(DIM_BASELINE, &dim_core_handle);
+	/* if baseline is failed, dont perform measurement */
+	if (dim_measure_status_error(&dim_core_handle))
+		return;
+
 	queue_delayed_measure_work();
 }
 

@@ -6,6 +6,7 @@
 
 #include "dim_rb.h"
 #include "dim_tpm.h"
+#include "dim_safe_func.h"
 #include "dim_measure_log.h"
 
 /*
@@ -102,7 +103,7 @@ static int measure_info_insert(struct dim_measure_name *name,
 
 static void measure_log_destroy_info(struct dim_measure_log *info)
 {
-	kfree(info);
+	dim_kfree(info);
 }
 
 static void measure_log_destroy_name(struct dim_measure_name *name)
@@ -114,8 +115,8 @@ static void measure_log_destroy_name(struct dim_measure_name *name)
 	list_for_each_entry_safe(pos, n, &name->log_root, node)
 		measure_log_destroy_info(pos);
 	/* free self */
-	kfree(name->name);
-	kfree(name);
+	dim_kfree(name->name);
+	dim_kfree(name);
 }
 
 static int measure_log_create_name(const char *name_str,
@@ -123,13 +124,13 @@ static int measure_log_create_name(const char *name_str,
 {
 	struct dim_measure_name *new = NULL;
 
-	new = kzalloc(sizeof(struct dim_measure_name), GFP_KERNEL);
+	new = dim_kzalloc_gfp(sizeof(struct dim_measure_name));
 	if (new == NULL)
 		return -ENOMEM;
 
-	new->name = kstrdup(name_str, GFP_KERNEL);
+	new->name = dim_kstrdup_gfp(name_str);
 	if (new->name == NULL) {
-		kfree(new);
+		dim_kfree(new);
 		return -ENOMEM;
 	}
 
@@ -145,7 +146,7 @@ static int measure_log_create_info(char pcr, struct dim_digest *digest,
 	int ret = 0;
 	struct dim_measure_log *new = NULL;
 
-	new = kzalloc(sizeof(struct dim_measure_log), GFP_KERNEL);
+	new = dim_kzalloc_gfp(sizeof(struct dim_measure_log));
 	if (new == NULL)
 		return -ENOMEM;
 
@@ -153,7 +154,7 @@ static int measure_log_create_info(char pcr, struct dim_digest *digest,
 	new->type = flag;
 	ret = dim_digest_copy(&new->digest, digest);
 	if (ret < 0) {
-		kfree(new);
+		dim_kfree(new);
 		return ret;
 	}
 

@@ -5,37 +5,45 @@
 #include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/namei.h>
-#include <linux/slab.h>
-#include <linux/vmalloc.h>
 
+#include "dim_safe_func.h"
 #include "dim_utils.h"
 
-void *dim_kmalloc_gfp(size_t size)
+int dim_get_absolute_path(const char *path, const char **result)
 {
-	return kmalloc(size, GFP_KERNEL);
-}
-
-void dim_kfree(void *data)
-{
-	kfree(data);
-}
-
-const char *dim_absolute_path(const char *path, char *buf, int len)
-{
-	int ret;
+	int ret = 0;
 	struct path p;
+	char *buf = NULL;
 	char *apath = NULL;
 
-	if (path == NULL || buf == NULL)
-		return ERR_PTR(-EINVAL);
+	if (path == NULL)
+		return -EINVAL;
 
 	ret = kern_path(path, LOOKUP_FOLLOW, &p);
 	if (ret < 0)
-		return ERR_PTR(ret);
+		return ret;
 
-	apath = d_path(&p, buf, len);
+	buf = dim_kzalloc_gfp(PATH_MAX);
+	if (buf == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+
+	apath = d_path(&p, buf, PATH_MAX);
+	if (IS_ERR(apath)) {
+		ret = PTR_ERR(apath);
+		goto out;
+	}
+
+	*result = dim_kstrdup_gfp(apath);
+	if (*result == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+out:
 	path_put(&p);
-	return apath;
+	dim_kfree(buf);
+	return ret;	
 }
 
 bool dim_string_end_with(const char *str, const char *ext)
@@ -50,10 +58,10 @@ bool dim_string_end_with(const char *str, const char *ext)
 	if (name_len < ext_len)
 		return false;
 
-	return strcmp(str + name_len - ext_len, ext) == 0;
+	return dim_strcmp(str + name_len - ext_len, ext) == 0;
 }
 
-int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
+int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data)
 {
 	int ret = 0;
 	int i = 0;
@@ -71,16 +79,16 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
 
 		if (buf[i] == '\n') {
 			buf[i] = '\0';
-			ret = line_parser(line, line_no);
+			ret = line_parser(line, line_no, data);
 			line = &buf[i + 1];
 		} else {
 			line_len = buf + i - line + 1;
-			line_buf = kzalloc(line_len + 1, GFP_KERNEL);
+			line_buf = dim_kzalloc_gfp(line_len + 1);
 			if (line_buf == NULL)
 				return -ENOMEM;
 
 			memcpy(line_buf, line, line_len);
-			ret = line_parser(line_buf, line_no);
+			ret = line_parser(line_buf, line_no, data);
 		}
 
 		if (ret < 0) {
@@ -96,7 +104,7 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int))
 	}
 out:
 	if (line_buf != NULL)
-		kfree(line_buf);
+		dim_kfree(line_buf);
 
 	return ret;
 }

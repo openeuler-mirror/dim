@@ -88,7 +88,7 @@ test_measure_all_text_normal() {
 }
 
 test_measure_all_text_normal_sm3() {
-    dim_gen_baseline_all 1
+    dim_gen_baseline_all sm3
     dim_gen_policy_all
     load_dim_modules "measure_hash=sm3"
     check_dim_core_log_normal

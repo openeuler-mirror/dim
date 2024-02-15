@@ -131,7 +131,7 @@ static int calc_kernel_digest(struct dim_hash *hash, struct dim_digest *digest)
 	if (ret < 0)
 		dim_err("failed to calculate kernel digest: %d\n", ret);
 
-	vfree(jcode_sort);
+	dim_vfree(jcode_sort);
 	return ret;
 }
 

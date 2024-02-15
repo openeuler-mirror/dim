@@ -17,10 +17,8 @@
 #define dim_info(fmt, ...) pr_info(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
 #define dim_devel(fmt, ...)
 
-void *dim_kmalloc_gfp(size_t size);
-void dim_kfree(void *data);
-const char *dim_absolute_path(const char *path, char *buf, int len);
+int dim_get_absolute_path(const char *path, const char **result);
 bool dim_string_end_with(const char *str, const char *ext);
-int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int));
+int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data);
 
 #endif

@@ -64,11 +64,11 @@ static int measure_module(struct dim_policy *policy, void *data)
 {
 	int ret = 0;
 	struct module_text_measure_ctx *ctx = data;
-	const char *mod_name = policy->val;
+	const char *mod_name = policy->name;
 	struct dim_digest digest = { 0 };
 
 	if (policy == NULL || policy->obj != DIM_POLICY_OBJ_MODULE_TEXT ||
-	    policy->key != DIM_POLICY_KEY_NAME || mod_name == NULL)
+	    mod_name == NULL)
 		return 0;
 
 	/* if module is not inserted in baseline_init stage, ignore it */

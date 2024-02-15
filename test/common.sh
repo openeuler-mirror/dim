@@ -6,8 +6,8 @@ TEST_DEMO_DIR=/opt/dim/demo
 TEST_DEMO_BPRM=$TEST_DEMO_DIR/dim_test_demo
 
 TEST_LOG=log
-DIM_CORE_PATH=/root/dim/dim_core.ko
-DIM_MONITOR_PATH=/root/dim/dim_monitor.ko
+DIM_CORE_PATH=../src/dim_core.ko
+DIM_MONITOR_PATH=../src/dim_monitor.ko
 
 DIM_BASELINE_DIR_PATH=/etc/dim/digest_list
 DIM_POLICY_PATH=/etc/dim/policy
@@ -144,7 +144,7 @@ DIM_BASELINE_DIR_ALL=("/usr/bin" "/usr/sbin" "/usr/lib64" "/usr/libexec" "/usr/l
 
 dim_gen_baseline_all() {
     if [ $1 ]; then
-        digest_algorithm="-a sm3"
+        digest_algorithm="-a$1"
     else
         digest_algorithm=""
     fi

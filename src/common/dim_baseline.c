@@ -5,6 +5,7 @@
 #include "dim_rb.h"
 #include "dim_baseline.h"
 #include "dim_utils.h"
+#include "dim_safe_func.h"
 
 static int dim_baseline_compare(struct dim_baseline *x,
 				struct dim_baseline *y)
@@ -14,7 +15,7 @@ static int dim_baseline_compare(struct dim_baseline *x,
 	if (x->type != y->type)
 		return x->type > y->type ? 1 : -1;
 
-	ret = strcmp(x->name, y->name);
+	ret = dim_strcmp(x->name, y->name);
 	if (ret != 0)
 		return ret;
 
@@ -150,7 +151,7 @@ int dim_baseline_init_tree(malloc_func malloc, free_func free,
 	rwlock_init(&root->lock);
 	root->rb_root = RB_ROOT;
 	/* use kmalloc by default */
-	root->malloc = malloc == NULL ? dim_kmalloc_gfp : malloc;
+	root->malloc = malloc == NULL ? dim_kzalloc_gfp : malloc;
 	root->free = free == NULL ? dim_kfree : free;
 	return 0;
 }
