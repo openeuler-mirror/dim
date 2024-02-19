@@ -6,8 +6,8 @@ TEST_DEMO_DIR=/opt/dim/demo
 TEST_DEMO_BPRM=$TEST_DEMO_DIR/dim_test_demo
 
 TEST_LOG=log
-DIM_CORE_PATH=../src/dim_core.ko
-DIM_MONITOR_PATH=../src/dim_monitor.ko
+DIM_CORE_PATH=../../src/dim_core.ko
+DIM_MONITOR_PATH=../../src/dim_monitor.ko
 
 DIM_BASELINE_DIR_PATH=/etc/dim/digest_list
 DIM_POLICY_PATH=/etc/dim/policy
@@ -22,6 +22,22 @@ DIM_TEST_MOD_DEMO_C=$TEST_MODULE_DIR/dim_test_module_demo.c
 DIM_TEST_MOD_DEMO_TAMPER_C=$TEST_MODULE_DIR/dim_test_module_demo_tamper.c
 
 TEST_RESULT=0
+
+check_value_zero() {
+    if [ $1 -ne 0 ]; then
+        echo "failed to check value: $1 == 0, context: $2"
+        TEST_RESULT=1
+        return 1
+    fi
+}
+
+check_value_not_zero() {
+    if [ $1 -eq 0 ]; then
+        echo "failed to check value: $1 != 0, context: $2"
+        TEST_RESULT=1
+        return 1
+    fi
+}
 
 dim_core_status() {
     cat /sys/kernel/security/dim/runtime_status
@@ -64,11 +80,11 @@ remove_dim_modules() {
 
 load_dim_modules () {
     remove_dim_modules
-    load_dim_core_modules $1
-    load_dim_monitor_modules $2
+    load_dim_core_module $1
+    load_dim_monitor_module $2
 }
 
-load_dim_core_modules () {
+load_dim_core_module () {
     # load dim_core module
     if [ ! $DIM_CORE_PATH ]; then
         modprobe dim_core $1
@@ -78,11 +94,11 @@ load_dim_core_modules () {
 
     if [ $? -ne 0 ]; then
         echo "fail to load dim_core!"
-        exit 1
+        return 1
     fi
 }
 
-load_dim_monitor_modules () {
+load_dim_monitor_module () {
     # load dim_monitor module
     if [ ! $DIM_MONITOR_PATH ]; then
         modprobe dim_monitor $1
@@ -92,11 +108,15 @@ load_dim_monitor_modules () {
 
     if [ $? -ne 0 ]; then
         echo "fail to load dim_monitor!"
-        exit 1
+        return 1
     fi
 }
 
 dim_backup_baseline_and_policy() {
+    if [ -d $DIM_BASELINE_DIR_PATH.bak ]; then
+        rm -rf $DIM_BASELINE_DIR_PATH.bak
+    fi
+
     if [ -d $DIM_BASELINE_DIR_PATH ]; then
         mv $DIM_BASELINE_DIR_PATH $DIM_BASELINE_DIR_PATH.bak
     fi
@@ -376,15 +396,4 @@ run_dim_core_and_check_log() {
     fi
 }
 
-test_pre() {
-    mkdir -p $TEST_DEMO_DIR
-    gcc dim_test_demo.c -o $TEST_DEMO_DIR/dim_test_demo
-    dim_backup_baseline_and_policy
-    load_dim_modules
-}
-
-test_post() {
-    remove_dim_modules
-    dim_restore_baseline_and_policy
-}
 

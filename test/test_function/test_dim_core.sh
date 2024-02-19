@@ -1,7 +1,19 @@
-# Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+# Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 #!/bin/bash
 
-. ./common.sh
+. ../common.sh
+
+test_pre() {
+    mkdir -p $TEST_DEMO_DIR
+    gcc dim_test_demo.c -o $TEST_DEMO_DIR/dim_test_demo
+    dim_backup_baseline_and_policy
+    load_dim_modules
+}
+
+test_post() {
+    remove_dim_modules
+    dim_restore_baseline_and_policy
+}
 
 test_measure_bprm_text_normal() {
     gen_dim_test_demo
@@ -118,11 +130,13 @@ test_invalid_policy() {
     done &>> $TEST_LOG
 }
 
-# Full measurement. The test is disabled by default.
-#           test_measure_all_text_normal \
-#           test_measure_all_text_normal_sm3 \
-#           test_measure_all_text_normal_sign \
-case_list="test_measure_bprm_text_normal \
+# The following testcases are disabled by default:
+#          test_measure_all_text_normal
+#          test_measure_all_text_normal_sm3
+#          test_measure_all_text_normal_sign
+
+case_list="
+           test_measure_bprm_text_normal \
            test_measure_bprm_text_no_baseline \
            test_measure_bprm_text_tamper_1 \
            test_measure_bprm_text_tamper_2 \
@@ -130,7 +144,10 @@ case_list="test_measure_bprm_text_normal \
            test_measure_module_text_no_baseline \
            test_measure_module_text_tamper \
            test_measure_kernel_normal \
-           test_invalid_policy"
+           test_invalid_policy \
+           "
+
+echo "===== Start testing dim_core function ====="
 
 for case in $case_list; do
     test_pre
@@ -143,3 +160,4 @@ for case in $case_list; do
     test_post
 done
 
+echo "===== End testing dim_core function ====="
