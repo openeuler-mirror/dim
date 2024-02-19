@@ -21,7 +21,7 @@
 
 static int code_cmp(const void *a, const void *b)
 {
-	return *(unsigned long *)a - *(unsigned long *)b;
+	return *(unsigned long *)a > *(unsigned long *)b ? 1 : 0;
 }
 
 static int sort_jump_table(struct jump_entry *sjump,
