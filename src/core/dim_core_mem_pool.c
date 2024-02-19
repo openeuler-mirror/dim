@@ -4,6 +4,7 @@
 
 #include <linux/mm.h>
 
+#include "dim_safe_func.h"
 #include "dim_utils.h"
 
 #include "dim_core_mem_pool.h"
@@ -108,6 +109,9 @@ void *dim_mem_pool_alloc(size_t size)
 	if (data == NULL)
 		return NULL;
 out:
+	#ifdef DIM_DEBUG_MEMORY_LEAK
+		dim_alloc_debug_inc();
+	#endif
 	data->size = mem_size;
 	return data->data;
 }
@@ -130,6 +134,10 @@ void dim_mem_pool_free(const void *data)
 	}
 
 	gen_pool_free(dim_pool, (uintptr_t)mem, mem->size);
+
+	#ifdef DIM_DEBUG_MEMORY_LEAK
+		dim_alloc_debug_dec();
+	#endif
 }
 
 void dim_mem_pool_walk_chunk(pool_chunk_visitor f, void *data)
