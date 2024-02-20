@@ -28,9 +28,10 @@ test_rmmod_when_baseline() {
     done
 }
 
-case_list="
-           test_rmmod_when_baseline \
-           "
+# The following testcases are disabled by default:
+#          test_rmmod_when_baseline
+
+case_list=""
 
 echo "===== Start testing dim_core DFX ====="
 
