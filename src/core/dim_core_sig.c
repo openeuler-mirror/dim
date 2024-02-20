@@ -182,8 +182,11 @@ int dim_core_sig_init(void)
 	ret = 0;
 err:
 	dim_vfree(data);
-	if (ret < 0)
+	if (ret < 0) {
 		key_put(dim_core_keyring);
+		dim_core_keyring = NULL;
+	}
+
 	return ret;
 }
 

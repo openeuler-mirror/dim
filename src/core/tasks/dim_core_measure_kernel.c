@@ -21,7 +21,7 @@
 
 static int code_cmp(const void *a, const void *b)
 {
-	return *(unsigned long *)a - *(unsigned long *)b;
+	return *(unsigned long *)a > *(unsigned long *)b ? 1 : 0;
 }
 
 static int sort_jump_table(struct jump_entry *sjump,
@@ -31,7 +31,7 @@ static int sort_jump_table(struct jump_entry *sjump,
 	unsigned int i;
 	unsigned long *buf = NULL;
 
-	buf = vzalloc(sizeof(unsigned long) * jump_counts);
+	buf = dim_vzalloc(sizeof(unsigned long) * jump_counts);
 	if (buf == NULL)
 		return -ENOMEM;
 

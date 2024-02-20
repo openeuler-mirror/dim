@@ -1,11 +1,15 @@
-# Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+# Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
 
-.PHONY: test
+.PHONY: test clean
+
+all: test
 
 test:
-	sh test_dim_core.sh
-	sh test_dim_monitor.sh
+	make -C test_interface/ test
+	make -C test_function/ test
+	make -C test_dfx/ test
 
 clean:
-	rm -f log
-	make -C test_module/ clean
+	make -C test_interface/ clean
+	make -C test_function/ clean
+	make -C test_dfx/ clean

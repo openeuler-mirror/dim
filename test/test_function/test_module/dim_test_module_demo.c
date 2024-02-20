@@ -1,14 +1,11 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2023-2024. All rights reserved.
  */
 
 #include <linux/module.h>
 
 static int test_mod_init(void)
 {
-    int i = 0;
-    i += 1;
-    pr_info("%d\n", i);
     pr_info("init!\n");
     return 0;
 }

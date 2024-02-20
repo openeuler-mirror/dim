@@ -63,7 +63,7 @@ static int policy_get_key(const char *s, const char **val)
 
 	for (; i < DIM_POLICY_KEY_LAST; i++) {
 		len = strlen(dim_policy_key_str[i]);
-		if (strncmp(s, dim_policy_key_str[i], len) == 0) {
+		if (dim_strncmp(s, dim_policy_key_str[i], len) == 0) {
 			*val = s + len;
 			return i;
 		}
