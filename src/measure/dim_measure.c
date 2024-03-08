@@ -91,6 +91,7 @@ void dim_measure_destroy(struct dim_measure *m)
 		return;
 
 	mutex_lock(&m->measure_lock);
+	dim_measure_tasks_unregister_all(m);
 	dim_measure_log_destroy_tree(&m->log);
 	dim_baseline_destroy_tree(&m->static_baseline);
 	dim_baseline_destroy_tree(&m->dynamic_baseline);

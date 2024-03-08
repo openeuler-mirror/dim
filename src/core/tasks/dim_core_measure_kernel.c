@@ -165,5 +165,7 @@ static int kernel_text_measure(int mode, struct dim_measure *m)
 
 struct dim_measure_task dim_core_measure_task_kernel_text = {
 	.name = "dim_core_measure_task_kernel_text",
+	.init = NULL,
+	.destroy = NULL,
 	.measure = kernel_text_measure,
 };

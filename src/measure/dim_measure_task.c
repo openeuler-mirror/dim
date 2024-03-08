@@ -62,11 +62,27 @@ void dim_measure_task_measure(int mode, struct dim_measure *m)
 
 static int task_register(struct dim_measure *m, struct dim_measure_task *t)
 {
+	int ret = 0;
+
 	if (t == NULL || t->name == NULL || t->measure == NULL)
 		return -EINVAL;
 
+	if (t->init != NULL) {
+		ret = t->init();
+		if (ret < 0)
+			return ret;
+	}
+
 	list_add_tail(&t->node, &m->task_list);
 	return 0;
+}
+
+static void task_unregister(struct dim_measure_task *t)
+{
+	if (t->destroy != NULL)
+		t->destroy();
+
+	list_del(&t->node);
 }
 
 int dim_measure_tasks_register(struct dim_measure *m,
@@ -81,11 +97,25 @@ int dim_measure_tasks_register(struct dim_measure *m,
 
 	for (; i < num; i++) {
 		ret = task_register(m, tasks[i]);
-		if (ret < 0)
+		if (ret < 0) {
+			dim_measure_tasks_unregister_all(m);
 			return ret;
+		}
 
 		dim_info("register measure task: %s\n", tasks[i]->name);
 	}
 
 	return 0;
+}
+
+void dim_measure_tasks_unregister_all(struct dim_measure *m)
+{
+	struct dim_measure_task *pos = NULL;
+	struct dim_measure_task *n = NULL;
+
+	if (m == NULL)
+		return;
+
+	list_for_each_entry_safe(pos, n, &m->task_list, node)
+		task_unregister(pos);
 }

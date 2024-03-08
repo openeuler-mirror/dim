@@ -21,7 +21,9 @@ static struct dim_measure_task *dim_core_tasks[] = {
 };
 
 /* the global measurement handle */
-struct dim_measure dim_monitor_handle = { 0 };
+struct dim_measure dim_monitor_handle = {
+	.task_list = LIST_HEAD_INIT(dim_monitor_handle.task_list),
+};
 
 /* lock to prevent trigger multiple measurement */
 DEFINE_MUTEX(dim_monitor_measure_lock);

@@ -78,6 +78,9 @@ struct dim_measure_task {
 	struct list_head node;
 	/* task name for log printing */
 	const char *name;
+	/* init and destroy functions */
+	int (*init)(void);
+	void (*destroy)(void);
 	/* measure function */
 	int (*measure)(int mode, struct dim_measure *m);
 };
@@ -105,6 +108,7 @@ int dim_measure_dynamic_baseline_search(struct dim_measure *m,
 int dim_measure_tasks_register(struct dim_measure *m,
 			       struct dim_measure_task **tasks,
 			       unsigned int num);
+void dim_measure_tasks_unregister_all(struct dim_measure *m);
 void dim_measure_task_measure(int mode, struct dim_measure *m);
 
 /* functions for dim measurement status */

@@ -60,5 +60,7 @@ static int module_text_measure(int mode, struct dim_measure *m)
 
 struct dim_measure_task dim_monitor_measure_text = {
 	.name = "dim_monitor_measure_text",
+	.init = NULL,
+	.destroy = NULL,
 	.measure = module_text_measure,
 };
