@@ -37,7 +37,7 @@ struct dim_measure_log_tree {
 	struct list_head list_root; /* list root for printing logs in order */
 	struct dim_hash *hash; /* algorithm for calculating log hash */
 	struct dim_tpm *tpm;
-	char pcr;
+	unsigned int pcr;
 	rwlock_t lock;
 	unsigned int count; /* number of log */
 	unsigned int cap; /* capacity of log */
@@ -93,7 +93,7 @@ static inline bool is_same_dim_measure_log(struct dim_measure_log *x,
 
 int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
 			      struct dim_hash *hash, struct dim_tpm *tpm,
-			      unsigned int cap, char pcr);
+			      unsigned int cap, unsigned int pcr);
 void dim_measure_log_destroy_tree(struct dim_measure_log_tree *root);
 int dim_measure_log_add(struct dim_measure_log_tree *root,
 			     const char *name_str,

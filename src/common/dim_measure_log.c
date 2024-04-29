@@ -272,9 +272,9 @@ int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
 			      struct dim_hash *hash, 
 			      struct dim_tpm *tpm,
 			      unsigned int cap,
-			      char pcr)
+			      unsigned int pcr)
 {
-	if (root == NULL || hash == NULL || pcr < 0)
+	if (root == NULL || hash == NULL)
 		return -EINVAL;
 
 	rwlock_init(&root->lock);
