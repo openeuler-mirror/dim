@@ -266,6 +266,7 @@ static int measure_elf_text(struct vm_area_struct *vma,
 	int ret = 0;
 	unsigned int i = 0;
 	unsigned long addr = 0;
+	unsigned long base = 0;
 	struct elf_phdr *phdr = NULL;
 	struct dim_digest digest = {
 		.algo = ctx->m->hash.algo,
@@ -276,10 +277,12 @@ static int measure_elf_text(struct vm_area_struct *vma,
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
 		return ret;
-	
+
+	base = vma->vm_start - phdrs_text[0].p_vaddr;
+
 	for (; i < phdrs_text_num; i++) {
 		phdr = &phdrs_text[i];
-		addr = vma->vm_start + phdr->p_vaddr - vma->vm_pgoff * PAGE_SIZE;
+		addr = base + phdr->p_vaddr;
 		ret = dim_vm_hash_update_address(vma->vm_mm, addr,
 						 phdr->p_memsz, shash);
 		if (ret < 0)
