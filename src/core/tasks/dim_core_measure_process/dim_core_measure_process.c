@@ -134,7 +134,8 @@ static int check_process_digest(struct dim_digest *digest,
 		return ret;
 	}
 
-	if (log_flag != LOG_TAMPERED || !dim_core_measure_action_enabled)
+	if (log_flag != LOG_TAMPERED ||
+	    dim_core_measure_action_get() == DIM_MEASURE_ACTION_DISABLE)
 		return 0;
 
 	/* now the process is tampered, check if action need to be taken */

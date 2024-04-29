@@ -32,11 +32,28 @@ static struct work_struct dim_baseline_work;
 
 /* special measurement parameters for dim_core */
 static atomic_t measure_interval = ATOMIC_INIT(0);
+static atomic_t measure_action = ATOMIC_INIT(0);
 
 /* interface to print measure status string */
 const char *dim_core_status_print(void)
 {
 	return dim_measure_status_print(&dim_core_handle);
+}
+
+/* interface to get tampered action */
+long dim_core_measure_action_get(void)
+{
+	return atomic_read(&measure_action);
+}
+
+/* interface to set measure action */
+int dim_core_measure_action_set(unsigned int act)
+{
+	if (act >= DIM_MEASURE_ACTION_MAX)
+		return -ERANGE;
+
+	atomic_set(&measure_action, act);
+	return 0;
 }
 
 /* interface to get measure interval */

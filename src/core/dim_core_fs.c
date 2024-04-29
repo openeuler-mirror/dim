@@ -54,6 +54,16 @@ dim_uint_rw_entry(dim_interval, interval, dim_core_interval_get,
 		  dim_core_interval_set);
 
 /*
+ * measure action set and read interface
+ * dim_entry struct: dim_tampered_action_entry
+ * file entry name: tampered_action
+ * read function: dim_core_measure_action_get
+ * write function: dim_core_measure_action_set
+ */
+dim_uint_rw_entry(dim_tampered_action, tampered_action,
+		  dim_core_measure_action_get, dim_core_measure_action_set);
+
+/*
  * dim directory
  */
 static struct dim_entry dim_core_dir = {
@@ -69,6 +79,7 @@ static struct dim_entry *dim_core_files[] = {
 	&dim_measure_log_entry,
 	&dim_status_entry,
 	&dim_interval_entry,
+	&dim_tampered_action_entry,
 };
 
 void dim_core_destroy_fs(void)
