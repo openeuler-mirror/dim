@@ -101,9 +101,16 @@ int dim_measure_process_dynamic_result(struct dim_measure *m, int mode,
 int dim_measure_static_baseline_add(struct dim_measure *m,
 				    const char *name, int type,
 				    struct dim_digest *digest);
+int dim_measure_dynamic_baseline_add(struct dim_measure *m,
+				     const char *name, int type,
+				     struct dim_digest *digest);
+int dim_measure_static_baseline_search(struct dim_measure *m,
+				       const char *name, int type,
+				       struct dim_digest *digest);
 int dim_measure_dynamic_baseline_search(struct dim_measure *m,
 					const char *name, int type,
 					struct dim_digest *digest);
+
 /* functions for dim measurement task */
 int dim_measure_tasks_register(struct dim_measure *m,
 			       struct dim_measure_task **tasks,

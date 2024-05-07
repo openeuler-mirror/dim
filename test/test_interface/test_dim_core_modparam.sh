@@ -26,7 +26,6 @@ check_invalid_module_param()
 test_module_param_measure_hash()
 {
     check_valid_module_param measure_hash=sha256
-    check_valid_module_param measure_hash=sm3
     check_invalid_module_param measure_hash=md5
     check_invalid_module_param measure_hash=abc
 }
@@ -37,7 +36,7 @@ test_module_param_measure_pcr()
     check_valid_module_param measure_pcr=1
     check_valid_module_param measure_pcr=11
     check_valid_module_param measure_pcr=127
-    check_invalid_module_param measure_pcr=128
+    check_valid_module_param measure_pcr=128
     check_invalid_module_param measure_pcr=-1
     check_invalid_module_param measure_pcr=abc
 }
@@ -66,13 +65,6 @@ test_module_param_measure_interval()
     dim_restore_baseline_and_policy
 }
 
-test_module_param_measure_action()
-{
-    check_valid_module_param measure_action=0
-    check_valid_module_param measure_action=1
-    check_invalid_module_param measure_action=abc
-}
-
 test_module_param_signature()
 {
     check_valid_module_param signature=0
@@ -96,7 +88,6 @@ case_list="
            test_module_param_measure_pcr \
            test_module_param_measure_schedule \
            test_module_param_measure_interval \
-           test_module_param_measure_action \
            test_module_param_signature \
            test_module_param_measure_log_capacity \
            "

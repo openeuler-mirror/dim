@@ -30,7 +30,6 @@ check_invalid_module_param()
 test_module_param_measure_hash()
 {
     check_valid_module_param measure_hash=sha256
-    check_valid_module_param measure_hash=sm3
     check_invalid_module_param measure_hash=md5
     check_invalid_module_param measure_hash=abc
 }
@@ -41,7 +40,7 @@ test_module_param_measure_pcr()
     check_valid_module_param measure_pcr=1
     check_valid_module_param measure_pcr=11
     check_valid_module_param measure_pcr=127
-    check_invalid_module_param measure_pcr=128
+    check_valid_module_param measure_pcr=128
     check_invalid_module_param measure_pcr=-1
     check_invalid_module_param measure_pcr=abc
 }

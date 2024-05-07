@@ -46,7 +46,23 @@ static int baseline_check_add(const char *name, int type,
 			      struct dim_digest *digest,
 			      struct dim_measure *m)
 {
-	return dim_measure_static_baseline_add(m, name, type, digest);
+	int ret = 0;
+	const char *real_path = NULL;
+
+	if (type == DIM_BASELINE_KERNEL)
+		return dim_measure_static_baseline_add(m, name, type, digest);
+
+	/* for process, try to add the absolute path */
+	ret = dim_get_absolute_path(name, &real_path);
+	if (ret < 0) {
+		dim_warn("failed to get absolute path of %s in static baeline: %d\n",
+			 name, ret);
+		return dim_measure_static_baseline_add(m, name, type, digest);
+	}
+
+	ret = dim_measure_static_baseline_add(m, real_path, type, digest);
+	dim_kfree(real_path);
+	return ret;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)

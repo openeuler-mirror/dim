@@ -16,7 +16,12 @@
 #define DIM_MINUTE_TO_SEC (60UL)
 #define DIM_MINUTE_TO_NSEC (60UL * 1000 * 1000 * 1000)
 
-extern bool dim_core_measure_action_enabled;
+enum dim_measure_action {
+	DIM_MEASURE_ACTION_DISABLE,
+	DIM_MEASURE_ACTION_ENABLE,
+	DIM_MEASURE_ACTION_MAX,
+};
+
 extern struct dim_measure dim_core_handle;
 
 /* global init and destroy */
@@ -25,6 +30,8 @@ void dim_core_measure_destroy(void);
 
 /* control function for measurement parameters */
 const char *dim_core_status_print(void);
+long dim_core_measure_action_get(void);
+int dim_core_measure_action_set(unsigned int act);
 long dim_core_interval_get(void);
 int dim_core_interval_set(unsigned int p);
 long dim_core_tampered_action_get(void);

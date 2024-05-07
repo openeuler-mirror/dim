@@ -18,10 +18,10 @@ const char *dim_measure_status_print(struct dim_measure *m)
 {
 	int status = 0;
         
-        if (m == NULL)
-                return status_name[MEASURE_STATUS_LAST];
+	if (m == NULL)
+		return status_name[MEASURE_STATUS_LAST];
 
-        status = atomic_read(&m->status);
+	status = atomic_read(&m->status);
 	if (status < 0 || status >= MEASURE_STATUS_LAST)
 		status = MEASURE_STATUS_LAST;
 

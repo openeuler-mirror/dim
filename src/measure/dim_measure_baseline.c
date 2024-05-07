@@ -224,6 +224,26 @@ int dim_measure_static_baseline_add(struct dim_measure *m,
 	return static_baseline_add(m, name, type, digest);
 }
 
+int dim_measure_dynamic_baseline_add(struct dim_measure *m,
+				     const char *name, int type,
+				     struct dim_digest *digest)
+{
+	if (m == NULL)
+		return -EINVAL;
+
+	return dynamic_baseline_add(m, name, type, digest);
+}
+
+int dim_measure_static_baseline_search(struct dim_measure *m,
+				       const char *name, int type,
+				       struct dim_digest *digest)
+{
+	if (m == NULL)
+		return -EINVAL;
+
+	return static_baseline_search(m, name, type, digest);
+}
+
 int dim_measure_dynamic_baseline_search(struct dim_measure *m,
 					const char *name, int type,
 					struct dim_digest *digest)

@@ -9,7 +9,9 @@
 
 static const char *allow_hash[] = {
 	"sha256",
+#ifdef DIM_HASH_SUPPORT_SM3
 	"sm3",
+#endif
 };
 
 int dim_hash_init(const char *algo_name, struct dim_hash *hash)
@@ -30,6 +32,7 @@ int dim_hash_init(const char *algo_name, struct dim_hash *hash)
 		hash->tfm = NULL;
 	}
 
+	hash->name = algo_name;
 	return ret;
 }
 

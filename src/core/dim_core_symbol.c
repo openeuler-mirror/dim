@@ -45,20 +45,12 @@ int dim_core_kallsyms_init(void)
 	k->find_get_task_by_vpid = (DIM_FIND_GET_TASK_BY_VPID)
 		dim_kallsyms_lookup_name("find_get_task_by_vpid");
 #endif
-#ifndef JUMP_LABEL_NOP_SIZE
-	k->arch_jump_entry_size = (DIM_ARCH_JUMP_ENTRY_SIZE)
-		dim_kallsyms_lookup_name("arch_jump_entry_size");
-#endif
 
 	return (k->stext == NULL || k->etext == NULL ||
-#ifndef JUMP_LABEL_NOP_SIZE
-		k->arch_jump_entry_size == NULL ||
-#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 4, 0)
 		k->find_module == NULL || k->find_get_task_by_vpid == NULL ||
 #endif
-	    k->start_jump_table == NULL || k->stop_jump_table == NULL ||
-	    k->jump_label_lock == NULL || k->jump_label_lock == NULL ||
-	    k->walk_process_tree == NULL) ? -ENOENT : 0;
+		k->start_jump_table == NULL || k->stop_jump_table == NULL ||
+		k->jump_label_lock == NULL || k->jump_label_lock == NULL ||
+		k->walk_process_tree == NULL) ? -ENOENT : 0;
 }
-
