@@ -247,8 +247,10 @@ int dim_core_measure_init(struct dim_measure_cfg *cfg, unsigned int interval)
 	return 0;
 err:
 	dim_measure_destroy(&dim_core_handle);
-	if (dim_work_queue != NULL)
+	if (dim_work_queue != NULL) {
 		destroy_workqueue(dim_work_queue);
+		dim_work_queue = NULL;
+	}
 
 	return ret;
 }
