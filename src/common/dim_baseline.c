@@ -107,7 +107,7 @@ int dim_baseline_add(struct dim_baseline_tree *root, const char *name,
 		goto err;
 
 	dim_strncpy((char *)baseline->name, name, buf_len - 1);
-        ((char *)baseline->name)[buf_len - 1] = '\0';
+	((char *)baseline->name)[buf_len - 1] = '\0';
 
 	write_lock(&root->lock);
 	ret = dim_baseline_rb_add(&root->rb_root, baseline, NULL);
