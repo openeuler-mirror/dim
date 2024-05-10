@@ -73,13 +73,13 @@ int dim_core_interval_set(unsigned int min)
 
 	atomic_set(&measure_interval, min);
 	if (min == 0) {
-		dim_info("cancel dim timed measure work");
+		dim_info("cancel dim timed measure work\n");
 		cancel_delayed_work_sync(&dim_measure_work);
 	} else {
 		jiffies = nsecs_to_jiffies64((unsigned long)min *
 					     DIM_MINUTE_TO_NSEC);
 		dim_info("modify dim measure interval to %u min "
-			 "(jittfies = 0x%lx)", min, jiffies);
+			 "(jittfies = 0x%lx)\n", min, jiffies);
 		mod_delayed_work(dim_work_queue, &dim_measure_work, jiffies);
 	}
 
@@ -247,8 +247,10 @@ int dim_core_measure_init(struct dim_measure_cfg *cfg, unsigned int interval)
 	return 0;
 err:
 	dim_measure_destroy(&dim_core_handle);
-	if (dim_work_queue != NULL)
+	if (dim_work_queue != NULL) {
 		destroy_workqueue(dim_work_queue);
+		dim_work_queue = NULL;
+	}
 
 	return ret;
 }

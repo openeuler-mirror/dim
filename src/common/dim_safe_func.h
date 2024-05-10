@@ -132,12 +132,4 @@ static inline int dim_strncmp(const char *cs, const char *ct, size_t count)
 	return strncmp(cs, ct, count);
 }
 
-static inline char *dim_strncpy(char *dest, const char *src, size_t count)
-{
-	if (dest == NULL || src == NULL)
-		return NULL;
-
-	return strncpy(dest, src, count);
-}
-
 #endif

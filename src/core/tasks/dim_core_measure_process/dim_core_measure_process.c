@@ -78,6 +78,12 @@ static int kill_task_tree(struct task_struct *tsk)
 	const int def_size = 32;
 	struct task_kill_ctx ctx = { .size = def_size };
 
+	if (tsk->pid == 1) {
+		/* dont kill the init process */
+		dim_warn("the pid of tampered task is 1, don't kill it\n");
+		return 0;
+	}
+
 	ctx.buf = dim_kzalloc_gfp(def_size * sizeof(struct task_struct *));
 	if (ctx.buf == NULL)
 		return -ENOMEM;
