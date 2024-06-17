@@ -222,7 +222,10 @@ static int get_elf_measure_area(struct file *elf_file,
 		return ret;
 	}
 
-	// TODO
+	/* check if it is no need to measure trampoline */
+	if (shdr_trampoline == NULL)
+		return 0;
+
 	ret = get_elf_section(elf_file, &ehdr, TRAMPOLINE_SECTION_NAME, shdr_trampoline);
 	if (ret == 0)
 		*shdr_trampoline_find = true;
@@ -254,6 +257,14 @@ static int measure_elf_trampoline(struct vm_area_struct *vma,
 	if (ret < 0) {
 		dim_err("failed to calculate trampoline vma digest\n");
 		return ret;
+	}
+
+	/* for baseline mode, add an extra dynamic baseline of trampoline */
+	if (ctx->mode == DIM_BASELINE) {
+		ret = dim_measure_dynamic_baseline_add(ctx->m, ctx->path,
+				DIM_BASELINE_TRAMPOLINE, &digest);
+		if (ret < 0)
+			pr_warn("failed to add trampoline dynamic baseline\n");
 	}
 
 	return ctx->check(&digest, ctx);
@@ -295,6 +306,18 @@ static int measure_elf_text(struct vm_area_struct *vma,
 	return ctx->check(&digest, ctx);
 }
 
+static bool trampoline_baseline_exist(struct task_measure_ctx *ctx)
+{
+	struct dim_digest digest = { 0 };
+
+	/* measure trampoline only the baseline is set */
+	return ctx->mode == DIM_BASELINE ?
+		(dim_measure_static_baseline_search(ctx->m, ctx->path,
+			DIM_BASELINE_TRAMPOLINE, &digest) == 0) :
+		(dim_measure_dynamic_baseline_search(ctx->m, ctx->path,
+			DIM_BASELINE_TRAMPOLINE, &digest) == 0);
+}
+
 int measure_process_module_text_elf(struct vm_area_struct *vma,
 				    struct task_measure_ctx *ctx)
 {
@@ -304,6 +327,7 @@ int measure_process_module_text_elf(struct vm_area_struct *vma,
 	unsigned int phdrs_text_num = 0;
 	struct elf_shdr shdr_trampoline = { 0 };
 	bool shdr_trampoline_find = false;
+	bool trampoline_baseline_existed = false;
 
 	if (vma == NULL || !vma_is_file_text(vma) || ctx == NULL
 	    || ctx->m == NULL || ctx->check == NULL)
@@ -314,8 +338,11 @@ int measure_process_module_text_elf(struct vm_area_struct *vma,
 		return -ENOEXEC;
 	}
 
+	trampoline_baseline_existed = trampoline_baseline_exist(ctx);
+
 	ret = get_elf_measure_area(elf_file, &phdrs_text, &phdrs_text_num,
-				   &shdr_trampoline, &shdr_trampoline_find);
+				   trampoline_baseline_existed ? &shdr_trampoline : NULL,
+				   &shdr_trampoline_find);
 	if (ret < 0) {
 		dim_err("failed to get elf measure area from vma\n");
 		return ret;
@@ -331,7 +358,7 @@ int measure_process_module_text_elf(struct vm_area_struct *vma,
 		return ret;
 	}
 
-	if (shdr_trampoline_find) {
+	if (shdr_trampoline_find && trampoline_baseline_existed) {
 		ret = measure_elf_trampoline(vma, base, &shdr_trampoline, ctx);
 		if (ret < 0) {
 			dim_err("failed to measure elf trampoline: %d\n", ret);
