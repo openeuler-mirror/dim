@@ -89,8 +89,8 @@ static int kill_task_tree(struct task_struct *tsk)
 		return -ENOMEM;
 
 	dim_core_kernel_symbol.walk_process_tree(tsk, store_task_tree, &ctx);
-	if (ctx.len != 0) {
-		for (i = ctx.len; i >= 0; i--) {
+	if (ctx.len > 0) {
+		for (i = ctx.len - 1; i >= 0; i--) {
 			send_sig(SIGKILL, ctx.buf[i], 1);
 			put_task_struct(ctx.buf[i]);
 		}
