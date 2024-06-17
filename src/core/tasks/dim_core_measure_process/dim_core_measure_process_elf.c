@@ -233,6 +233,7 @@ static int get_elf_measure_area(struct file *elf_file,
 }
 
 static int measure_elf_trampoline(struct vm_area_struct *vma,
+				  unsigned long base,
 				  struct elf_shdr *shdr_trampoline,
 				  struct task_measure_ctx *ctx)
 {
@@ -243,7 +244,7 @@ static int measure_elf_trampoline(struct vm_area_struct *vma,
 		.algo = ctx->m->hash.algo,
 	};
 
-	addr_trampoline = vma->vm_start + shdr_trampoline->sh_addr;
+	addr_trampoline = base + shdr_trampoline->sh_addr;
 	vma_trampoline = find_vma(vma->vm_mm, addr_trampoline);
 	if (vma_trampoline == NULL || !vma_is_text(vma_trampoline) ||
 	    vma_trampoline->vm_start != addr_trampoline)
@@ -259,6 +260,7 @@ static int measure_elf_trampoline(struct vm_area_struct *vma,
 }
 
 static int measure_elf_text(struct vm_area_struct *vma,
+			    unsigned long base,
 			    struct elf_phdr *phdrs_text,
 			    unsigned int phdrs_text_num,
 			    struct task_measure_ctx *ctx)
@@ -266,7 +268,6 @@ static int measure_elf_text(struct vm_area_struct *vma,
 	int ret = 0;
 	unsigned int i = 0;
 	unsigned long addr = 0;
-	unsigned long base = 0;
 	struct elf_phdr *phdr = NULL;
 	struct dim_digest digest = {
 		.algo = ctx->m->hash.algo,
@@ -277,8 +278,6 @@ static int measure_elf_text(struct vm_area_struct *vma,
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
 		return ret;
-
-	base = vma->vm_start - phdrs_text[0].p_vaddr;
 
 	for (; i < phdrs_text_num; i++) {
 		phdr = &phdrs_text[i];
@@ -322,7 +321,10 @@ int measure_process_module_text_elf(struct vm_area_struct *vma,
 		return ret;
 	}
 
-	ret = measure_elf_text(vma, phdrs_text, phdrs_text_num, ctx);
+	/* the vma is the first file-mapping text segment */
+	base = vma->vm_start - phdrs_text[0].p_vaddr;
+
+	ret = measure_elf_text(vma, base, phdrs_text, phdrs_text_num, ctx);
 	dim_kfree(phdrs_text);
 	if (ret < 0) {
 		dim_err("failed to measure elf text: %d\n", ret);
@@ -330,7 +332,7 @@ int measure_process_module_text_elf(struct vm_area_struct *vma,
 	}
 
 	if (shdr_trampoline_find) {
-		ret = measure_elf_trampoline(vma, &shdr_trampoline, ctx);
+		ret = measure_elf_trampoline(vma, base, &shdr_trampoline, ctx);
 		if (ret < 0) {
 			dim_err("failed to measure elf trampoline: %d\n", ret);
 			return ret;
