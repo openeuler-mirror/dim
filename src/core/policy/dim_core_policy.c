@@ -132,7 +132,7 @@ static int policy_check_add_module_text(struct dim_policy *policy)
 	}
 
 	if (policy->path != NULL)
-		dim_warn("path is ignored for BPRM_TEXT policy\n");
+		dim_warn("path is ignored for MODULE_TEXT policy\n");
 
 	if (policy->action != DIM_POLICY_ACTION_LOG)
 		dim_warn("action is ignored for MODULE_TEXT policy\n");
