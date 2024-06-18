@@ -33,6 +33,9 @@ static int cal_measure_log_digest(const char *name,
 	int digest_size = dim_digest_size(info->digest.algo);
 	SHASH_DESC_ON_STACK(shash, hash->tfm);
 
+	if (algo_name == NULL)
+		return -EINVAL;
+
 	shash->tfm = hash->tfm;
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
