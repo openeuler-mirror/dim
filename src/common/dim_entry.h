@@ -11,7 +11,7 @@
 
 #include "dim_measure_log.h"
 
-#define DIM_ENTRY_DIR_MASK (S_IFDIR | S_IRWXU | S_IRUSR)
+#define DIM_ENTRY_DIR_MASK (S_IFDIR | S_IXUSR | S_IRUSR)
 #define DIM_ENTRY_RW_MASK (S_IWUSR | S_IRUSR)
 #define DIM_ENTRY_W_MASK (S_IWUSR)
 #define DIM_ENTRY_R_MASK (S_IRUSR)
