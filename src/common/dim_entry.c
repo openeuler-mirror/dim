@@ -4,8 +4,11 @@
 
 #include <linux/err.h>
 #include <linux/security.h>
+#include <linux/delay.h>
 
 #include "dim_entry.h"
+
+#define WAIT_TIME_MAX 1000
 
 int dim_entry_create(struct dim_entry *entry, struct dentry *parent)
 {
@@ -27,7 +30,15 @@ int dim_entry_create(struct dim_entry *entry, struct dentry *parent)
 
 void dim_entry_remove(struct dim_entry *entry)
 {
+	int time_ms = 0;
+
 	if (entry != NULL && entry->dentry != NULL) {
+		while (d_is_dir(entry->dentry) &&
+		       !simple_empty(entry->dentry) &&
+		       time_ms < WAIT_TIME_MAX) {
+			time_ms++;
+			msleep(1);
+		}
 		securityfs_remove(entry->dentry);
 		entry->dentry = NULL;
 	}

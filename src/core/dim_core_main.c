@@ -91,8 +91,8 @@ err:
 
 static void __exit dim_core_exit(void)
 {
-	dim_core_measure_destroy();
 	dim_core_destroy_fs();
+	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
 
 	if (signature)

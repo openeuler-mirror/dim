@@ -9,6 +9,8 @@
 #include "dim_safe_func.h"
 #include "dim_utils.h"
 
+#define DIM_MAX_LINE_BUF (8 * 1024)
+
 int dim_get_absolute_path(const char *path, const char **result)
 {
 	int ret = 0;
@@ -83,6 +85,11 @@ int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, vo
 			line = &buf[i + 1];
 		} else {
 			line_len = buf + i - line + 1;
+			if (line_len + 1 > DIM_MAX_LINE_BUF) {
+				dim_err("failed to alloc memory for line buff\n");
+				return -ENOMEM;
+			}
+
 			line_buf = dim_kzalloc_gfp(line_len + 1);
 			if (line_buf == NULL)
 				return -ENOMEM;

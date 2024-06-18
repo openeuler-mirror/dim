@@ -139,12 +139,12 @@ static int kernel_text_measure(int mode, struct dim_measure *m)
 {
 	int ret = 0;
 	const char *kr = init_uts_ns.name.release;
-	struct dim_digest digest = {
-		.algo = m->hash.algo,
-	};
+	struct dim_digest digest = {0};
 
 	if (m == NULL)
 		return -EINVAL;
+
+	digest.algo = m->hash.algo;
 
 	if (!dim_core_policy_match(DIM_POLICY_OBJ_KERNEL_TEXT,
 				   DIM_POLICY_KEY_NAME, kr))

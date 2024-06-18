@@ -74,4 +74,6 @@ void dim_tpm_destroy(struct dim_tpm *tpm)
 
 	put_device(&tpm->chip->dev);
 	dim_kfree(tpm->digests);
+	tpm->chip = NULL;
+	tpm->digests = NULL;
 }

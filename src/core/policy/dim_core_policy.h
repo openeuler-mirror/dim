@@ -10,7 +10,7 @@
 /* the policy filepath */
 #define DIM_POLICY_PATH "/etc/dim/policy"
 /* max number of lines for parsing */
-#define DIM_POLICY_LINE_MAX 10000
+#define DIM_POLICY_LINE_MAX 100000
 
 /* measurement object of policy */
 enum dim_policy_obj {

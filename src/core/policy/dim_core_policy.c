@@ -70,17 +70,17 @@ static int policy_check_add_bprm_text(struct dim_policy *policy)
 
 	/* check the policy is valid */
 	if (policy->path == NULL) {
-		pr_err("path must be set for BPRM_TEXT policy\n");
+		dim_err("path must be set for BPRM_TEXT policy\n");
 		return -EINVAL;
 	}
 
 	if (strlen(policy->path) + 1 > PATH_MAX) {
-		pr_err("path must be shorter than %d\n", PATH_MAX);
+		dim_err("path must be shorter than %d\n", PATH_MAX);
 		return -ENAMETOOLONG;
 	}
 
 	if (policy->name != NULL)
-		pr_warn("name is ignored for BPRM_TEXT policy\n");
+		dim_warn("name is ignored for BPRM_TEXT policy\n");
 
 	/* firstly, add the current node */
 	ret = dim_policy_rb_add(&policy_root, policy, NULL);
@@ -122,20 +122,20 @@ static int policy_check_add_bprm_text(struct dim_policy *policy)
 static int policy_check_add_module_text(struct dim_policy *policy)
 {
 	if (policy->name == NULL) {
-		pr_err("name must be set for MODULE_TEXT policy\n");
+		dim_err("name must be set for MODULE_TEXT policy\n");
 		return -EINVAL;
 	}
 
 	if (strlen(policy->name) + 1 > NAME_MAX) {
-		pr_err("name must be shorter than %d\n", NAME_MAX);
+		dim_err("name must be shorter than %d\n", NAME_MAX);
 		return -ENAMETOOLONG;
 	}
 
 	if (policy->path != NULL)
-		pr_warn("path is ignored for BPRM_TEXT policy\n");
+		dim_warn("path is ignored for MODULE_TEXT policy\n");
 
 	if (policy->action != DIM_POLICY_ACTION_LOG)
-		pr_warn("action is ignored for MODULE_TEXT policy\n");
+		dim_warn("action is ignored for MODULE_TEXT policy\n");
 
 	return dim_policy_rb_add(&policy_root, policy, NULL);
 }
@@ -144,7 +144,7 @@ static int policy_check_add_kernel_text(struct dim_policy *policy)
 {
 	if (policy->name != NULL || policy->path != NULL ||
 	    policy->action != DIM_POLICY_ACTION_LOG)
-		pr_warn("all parameters are ignored for KERNEL_TEXT policy\n");
+		dim_warn("all parameters are ignored for KERNEL_TEXT policy\n");
 
 	return dim_policy_rb_add(&policy_root, policy, NULL);
 }

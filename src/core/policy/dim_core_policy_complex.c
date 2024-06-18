@@ -165,7 +165,7 @@ static int policy_parse_line(char* line, int line_no, void *data)
 	ret = parse_line(line, policy);
 	if (ret < 0) {
 		policy_destroy(policy);
-		dim_err("fail to parse policy at line %d: %d\n", line_no, ret);
+		dim_err("failed to parse policy at line %d: %d\n", line_no, ret);
 		return ret;
 	}
 
@@ -174,7 +174,7 @@ static int policy_parse_line(char* line, int line_no, void *data)
 		policy_destroy(policy);
 		/* ignore the repeat add */
 		if (ret != -EEXIST)
-			dim_err("fail to add policy at line %d: %d\n", line_no, ret);
+			dim_err("failed to add policy at line %d: %d\n", line_no, ret);
 		return ret == -EEXIST ? 0 : ret;
 	}
 

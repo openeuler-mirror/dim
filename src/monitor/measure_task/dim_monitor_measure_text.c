@@ -8,7 +8,7 @@
 #include "dim_measure.h"
 
 #include "dim_monitor.h"
-
+#include "dim_monitor_symbol.h"
 #include "dim_monitor_measure_task.h"
 
 static int module_text_measure(int mode, struct dim_measure *m)

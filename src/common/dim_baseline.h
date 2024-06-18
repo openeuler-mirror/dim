@@ -15,6 +15,7 @@ enum dim_baseline_type {
 	DIM_BASELINE_USER, /* baseline of user process */
 	DIM_BASELINE_KERNEL, /* baseline of kernel or kernel modules */
 	DIM_BASELINE_DATA,
+	DIM_BASELINE_TRAMPOLINE,
 	DIM_BASELINE_LAST,
 };
 
@@ -22,6 +23,7 @@ static const char *const dim_baseline_name[DIM_BASELINE_LAST] = {
 	[DIM_BASELINE_USER] = "USER",
 	[DIM_BASELINE_KERNEL] = "KERNEL",
 	[DIM_BASELINE_DATA] = "DATA",
+	[DIM_BASELINE_TRAMPOLINE] = "TRAMPOLINE",
 };
 
 struct dim_baseline_tree {

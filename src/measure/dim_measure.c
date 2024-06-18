@@ -44,8 +44,10 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 	/* 2. init TPM, dont break if init fail */
 	if (cfg->pcr > 0) {
 		ret = dim_tpm_init(&m->tpm, HASH_ALGO_SHA256);
-		if (ret < 0)
+		if (ret < 0) {
+			cfg->pcr = 0;
 			dim_warn("failed to init tpm chip: %d\n", ret);
+		}
 	} else {
 		memset(&m->tpm, 0, sizeof(struct dim_tpm));
 	}

@@ -21,16 +21,6 @@
 #include "dim_core_measure_task.h"
 #include "dim_core_measure_process.h"
 
-/* max number of tasks to kill */
-#define DIM_KILL_TASKS_MAX (1024)
-
-struct task_kill_ctx {
-	struct task_struct **buf;
-	int len;
-	int size;
-	int ret;
-};
-
 static struct vm_area_struct *next_module_text_vma(struct vm_area_struct *vma)
 {
 	struct vm_area_struct *v = NULL;
@@ -48,55 +38,33 @@ static struct vm_area_struct *next_module_text_vma(struct vm_area_struct *vma)
 	return v;
 }
 
-static int store_task_tree(struct task_struct *p, void *data)
+static int kill_task(struct task_struct *p, void * __always_unused data)
 {
-	unsigned int new_size = 0;
-	struct task_struct **tmp = NULL;
-	struct task_kill_ctx *ctx = (struct task_kill_ctx *)data;
-
-	if (ctx->len == ctx->size) {
-		if (ctx->size >= DIM_KILL_TASKS_MAX)
-			return -ERANGE;
-
-		/* realloc to size * 2 */
-		new_size = ctx->size << 1;
-		tmp = dim_krealloc_atom(ctx->buf,
-				new_size * sizeof(struct task_struct *));
-		if (tmp == NULL)
-			return -ENOMEM;
-
-		ctx->buf = tmp;
+	if (p == current) {
+		/* dont kill the current process */
+		dim_warn("don't kill the current process\n");
+		return 0;
 	}
 
-	ctx->buf[ctx->len++] = get_task_struct(p);
+	send_sig(SIGKILL, p, 1);
 	return 1;
 }
 
 static int kill_task_tree(struct task_struct *tsk)
 {
-	int i = 0;
-	const int def_size = 32;
-	struct task_kill_ctx ctx = { .size = def_size };
-
 	if (tsk->pid == 1) {
 		/* dont kill the init process */
 		dim_warn("the pid of tampered task is 1, don't kill it\n");
 		return 0;
 	}
 
-	ctx.buf = dim_kzalloc_gfp(def_size * sizeof(struct task_struct *));
-	if (ctx.buf == NULL)
-		return -ENOMEM;
-
-	dim_core_kernel_symbol.walk_process_tree(tsk, store_task_tree, &ctx);
-	if (ctx.len != 0) {
-		for (i = ctx.len; i >= 0; i--) {
-			send_sig(SIGKILL, ctx.buf[i], 1);
-			put_task_struct(ctx.buf[i]);
-		}
+	if (tsk == current) {
+		/* dont kill the current process */
+		dim_warn("don't kill the current process\n");
+		return 0;
 	}
 
-	dim_kfree(ctx.buf);
+	dim_core_kernel_symbol.walk_process_tree(tsk, kill_task, NULL);
 	send_sig(SIGKILL, tsk, 1);
 	return 0;
 }
@@ -140,7 +108,7 @@ static int check_process_digest(struct dim_digest *digest,
 		return ret;
 	}
 
-	if (log_flag != LOG_TAMPERED ||
+	if (log_flag != LOG_TAMPERED || ctx->mode != DIM_MEASURE ||
 	    dim_core_measure_action_get() == DIM_MEASURE_ACTION_DISABLE)
 		return 0;
 
