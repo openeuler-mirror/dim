@@ -93,7 +93,8 @@ static int measure_log_add(struct dim_measure *m, const char *name,
 	int ret = dim_measure_log_add(&m->log, name, digest, flag);
 	if (ret < 0 && ret != -EEXIST) {
 		dim_err("failed to add measure log of %s: %d\n", name, ret);
-		return ret;
+		/* the measure log of this object has been limited */
+		return ret == -ENOSPC ? 0 : ret;
 	}
 
 	return 0;
