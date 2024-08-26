@@ -24,8 +24,8 @@ typedef int (*baseline_add_func)(const char *name, int type,
 struct baseline_parse_ctx {
 	/* context for directory walking */
 	struct dir_context ctx;
-	/* current directory path */
-	struct path *path;
+	/* entry to store the filenames in directory */
+	struct list_head name_list;
 	struct dim_measure *m;
 	baseline_match_func match;
 	baseline_add_func add;
