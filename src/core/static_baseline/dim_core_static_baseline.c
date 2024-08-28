@@ -65,41 +65,38 @@ static int baseline_check_add(const char *name, int type,
 	return ret;
 }
 
+struct name_entry {
+	char name[NAME_MAX];
+	struct list_head list;
+};
+
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 static int
 #else
 static bool
 #endif
-static_baseline_load(struct dir_context *__ctx,
-		     const char *name,
-		     int name_len,
-		     loff_t offset,
-		     unsigned long long ino,
-		     unsigned d_type)
+baseline_fill_dir(struct dir_context *__ctx,
+		  const char *name,
+		  int name_len,
+		  loff_t offset,
+		  unsigned long long ino,
+		  unsigned d_type)
 {
 	struct baseline_parse_ctx *ctx = container_of(__ctx, typeof(*ctx), ctx);
-	int ret;
-	void *buf = NULL;
-	unsigned long buf_len = 0;
+	struct name_entry *entry = NULL;
 
 	/* baseline file must end with '.hash' */
-	if (d_type != DT_REG || (!dim_string_end_with(name, ".hash")))
+	if (d_type != DT_REG || strlen(name) >= NAME_MAX ||
+	    (!dim_string_end_with(name, ".hash")))
 		goto out; /* ignore invalid files */
 
-	ret = dim_read_verify_file(ctx->path, name, &buf);
-	if (ret < 0 || buf == NULL) {
-		dim_err("failed to read and verify %s: %d\n", name, ret);
+	entry = dim_kzalloc_gfp(sizeof(struct name_entry));
+	if (entry == NULL)
 		goto out;
-	}
 
-	buf_len = ret;
-	ret = dim_baseline_parse(buf, buf_len, ctx);
-	if (ret < 0)
-		dim_err("failed to parse baseline file %s: %d\n", name, ret);
+	strcpy(entry->name, name);
+	list_add( &entry->list, &ctx->name_list);
 out:
-	if (buf != NULL)
-		dim_vfree(buf);
-
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 	return 0; /* ignore fail */
 #else
@@ -112,12 +109,16 @@ int dim_core_static_baseline_load(struct dim_measure *m)
 	int ret = 0;
 	struct path kpath;
 	struct file *file = NULL;
-	struct baseline_parse_ctx buf = {
-		.ctx.actor = static_baseline_load,
-		.path = &kpath,
+	struct name_entry *entry = NULL;
+	struct name_entry *tmp = NULL;
+	void *buf = NULL;
+	unsigned long buf_len = 0;
+	struct baseline_parse_ctx ctx = {
 		.m = m,
+		.ctx.actor = baseline_fill_dir,
 		.add = baseline_check_add,
 		.match = baseline_match_policy,
+		.name_list = LIST_HEAD_INIT(ctx.name_list)
 	};
 
 	if (m == NULL)
@@ -137,9 +138,26 @@ int dim_core_static_baseline_load(struct dim_measure *m)
 		return ret;
 	}
 
-	(void)iterate_dir(file, &buf.ctx);
+	(void)iterate_dir(file, &ctx.ctx);
+	filp_close(file, NULL);
+
+	list_for_each_entry_safe(entry, tmp, &ctx.name_list, list) {
+		ret = dim_read_verify_file(&kpath, entry->name, &buf);
+		if (ret < 0 || buf == NULL) {
+			dim_err("failed to read and verify %s: %d\n", entry->name, ret);
+			dim_kfree(entry);
+			continue;
+		}
+
+		buf_len = ret;
+		ret = dim_baseline_parse(buf, buf_len, &ctx);
+		if (ret < 0)
+			dim_err("failed to parse baseline file %s: %d\n", entry->name, ret);
+
+		dim_vfree(buf);
+		dim_kfree(entry);
+	}
 
 	path_put(&kpath);
-	filp_close(file, NULL);
 	return 0;
 }
