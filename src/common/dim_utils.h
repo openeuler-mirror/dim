@@ -18,7 +18,6 @@
 #define dim_devel(fmt, ...)
 
 int dim_get_absolute_path(const char *path, const char **result);
-bool dim_string_end_with(const char *str, const char *ext);
 int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data);
 
 #endif
