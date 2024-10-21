@@ -17,6 +17,9 @@
 #include "dim_core_measure.h"
 #include "dim_core_static_baseline.h"
 
+#define BASELINE_FILE_SUFFIX ".hash"
+#define BASELINE_FILE_SUFFIX_LEN 5
+
 static bool baseline_match_policy(const char *name, int type)
 {
 	const char *kr = init_uts_ns.name.release;
@@ -86,15 +89,17 @@ baseline_fill_dir(struct dir_context *__ctx,
 	struct name_entry *entry = NULL;
 
 	/* baseline file must end with '.hash' */
-	if (d_type != DT_REG || strlen(name) >= NAME_MAX ||
-	    (!dim_string_end_with(name, ".hash")))
+	if (d_type != DT_REG || name_len >= NAME_MAX ||
+	    name_len <= BASELINE_FILE_SUFFIX_LEN ||
+	    strncmp(name + name_len - BASELINE_FILE_SUFFIX_LEN,
+	    BASELINE_FILE_SUFFIX, BASELINE_FILE_SUFFIX_LEN))
 		goto out; /* ignore invalid files */
 
 	entry = dim_kzalloc_gfp(sizeof(struct name_entry));
 	if (entry == NULL)
 		goto out;
 
-	strcpy(entry->name, name);
+	strncpy(entry->name, name, name_len);
 	list_add( &entry->list, &ctx->name_list);
 out:
 #if LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)

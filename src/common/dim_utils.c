@@ -48,21 +48,6 @@ out:
 	return ret;	
 }
 
-bool dim_string_end_with(const char *str, const char *ext)
-{
-	int name_len, ext_len;
-
-	if (str == NULL || ext == NULL)
-		return false;
-
-	name_len = strlen(str);
-	ext_len = strlen(ext);
-	if (name_len < ext_len)
-		return false;
-
-	return dim_strcmp(str + name_len - ext_len, ext) == 0;
-}
-
 int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data)
 {
 	int ret = 0;
