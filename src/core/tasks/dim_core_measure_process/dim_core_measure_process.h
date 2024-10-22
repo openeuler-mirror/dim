@@ -8,7 +8,7 @@
 #include <linux/fs.h>
 #include <linux/mm.h>
 
-/* callback funtion to check results when do measurement */
+/* callback function to check results when do measurement */
 typedef int (*process_digest_check_func) (struct dim_digest *digest,
 					  void *ctx);
 
