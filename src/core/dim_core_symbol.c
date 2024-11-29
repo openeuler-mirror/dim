@@ -51,6 +51,6 @@ int dim_core_kallsyms_init(void)
 		k->find_module == NULL || k->find_get_task_by_vpid == NULL ||
 #endif
 		k->start_jump_table == NULL || k->stop_jump_table == NULL ||
-		k->jump_label_lock == NULL || k->jump_label_lock == NULL ||
+		k->jump_label_lock == NULL || k->jump_label_unlock == NULL ||
 		k->walk_process_tree == NULL) ? -ENOENT : 0;
 }
