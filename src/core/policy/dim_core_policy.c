@@ -87,7 +87,7 @@ static int policy_check_add_bprm_text(struct dim_policy *policy)
 	if (ret < 0)
 		return ret;
 
-	/* secondly, try to add another node with absolute path. beacuse
+	/* secondly, try to add another node with absolute path. because
 	   sometimes users may not sure whether to write /usr/bin/bash
 	   or /bin/bash in policy */
 	ret = dim_get_absolute_path(policy->path, &apath);

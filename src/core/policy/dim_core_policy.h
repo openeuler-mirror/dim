@@ -46,10 +46,10 @@ struct dim_policy {
 	int action; /* enum dim_policy_action */
 };
 
-/* callback funtion to walk dim policy nodes */
+/* callback function to walk dim policy nodes */
 typedef int (*dim_policy_visitor)(struct dim_policy *, void *);
 
-/* callback funtion to add a policy item when parsing policy file */
+/* callback function to add a policy item when parsing policy file */
 typedef int (*policy_add_func)(struct dim_policy *);
 
 /* parse dim policy in complex format */
