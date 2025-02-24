@@ -106,7 +106,7 @@ static int process_dynamic_baseline(struct dim_measure *m, const char *name,
 {
 	int ret = 0;
 	struct dim_digest digest_static = { 0 };
-	int def_flag = log_flag == NULL ? LOG_NO_SATIC_BASELINE : *log_flag;
+	int def_flag = log_flag == NULL ? LOG_NO_STATIC_BASELINE : *log_flag;
 
 	if (m == NULL || name == NULL || digest == NULL)
 		return -EINVAL;
@@ -159,7 +159,7 @@ static int process_static_baseline(struct dim_measure *m, const char *name,
 	/* 2. search digest from static baseline */
 	ret = static_baseline_search(m, name, DIM_BASELINE_USER, &digest_static);
 	if (ret < 0) /* 2.1. if not find, log the dynamic baseline */
-		return measure_log_add(m, name, digest, LOG_NO_SATIC_BASELINE);
+		return measure_log_add(m, name, digest, LOG_NO_STATIC_BASELINE);
 
 	/* 2.2. if find, compare with the static baseline */
 	if (static_baseline_match(m, name, DIM_BASELINE_USER, digest))
