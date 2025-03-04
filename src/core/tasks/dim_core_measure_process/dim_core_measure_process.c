@@ -211,7 +211,7 @@ static int store_task_pids(pid_t **pid_buf, unsigned int *pid_cnt)
 	unsigned int max_cnt = (PID_MAX_DEFAULT << 1);
 
 	/* maximum processing of PID_MAX_DEFAULT * 2 pids */
-	buf = dim_vzalloc(max_cnt);
+	buf = dim_vzalloc(max_cnt * sizeof(pid_t));
 	if (buf == NULL) {
 		dim_err("failed to allocate memory for pid buffer\n");
 		return -ENOMEM;
