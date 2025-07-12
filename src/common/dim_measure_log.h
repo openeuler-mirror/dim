@@ -16,7 +16,7 @@
 #define LOG_NUMBER_FILE_MAX 10
 
 enum dim_measure_log_type {
-	LOG_NO_SATIC_BASELINE,
+	LOG_NO_STATIC_BASELINE,
 	LOG_STATIC_BASELINE,
 	LOG_DYNAMIC_BASELINE,
 	LOG_TAMPERED,
@@ -25,7 +25,7 @@ enum dim_measure_log_type {
 };
 
 static const char *dim_measure_log_type_name[LOG_LAST] = {
-	[LOG_NO_SATIC_BASELINE] = "[no static baseline]",
+	[LOG_NO_STATIC_BASELINE] = "[no static baseline]",
 	[LOG_STATIC_BASELINE] = "[static baseline]",
 	[LOG_DYNAMIC_BASELINE] = "[dynamic baseline]",
 	[LOG_TAMPERED] = "[tampered]",

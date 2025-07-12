@@ -57,7 +57,7 @@ test_measure_bprm_text_tamper_2() {
 
 test_measure_kernel_normal() {
     dim_gen_policy_kernel
-    dim_gen_baseline_kerenl test.hash
+    dim_gen_baseline_kernel test.hash
 
     run_dim_core_and_check_log "$(measure_log_static $DIM_KERNEL_NAME "kernel")" 1 "$(measure_log_static $DIM_KERNEL_NAME "kernel")" 1
 }

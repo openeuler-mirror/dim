@@ -151,7 +151,7 @@ dim_gen_baseline_dir() {
     dim_gen_baseline -r $1 -o $DIM_BASELINE_DIR_PATH/$2
 }
 
-dim_gen_baseline_kerenl() {
+dim_gen_baseline_kernel() {
     mkdir -p $DIM_BASELINE_DIR_PATH
     if [ -z $1 ]; then
         dim_gen_baseline -k "$(uname -r)" $DIM_KERNEL_NAME
@@ -279,7 +279,7 @@ measure_log_tampered() {
 
 measure_log_static() {
     if [ $2 ]; then
-        baseline="$(dim_gen_baseline_kerenl)"
+        baseline="$(dim_gen_baseline_kernel)"
         echo "$(dim_baseline_to_measure_log "$baseline") \[static baseline\]"
     else
         baseline="$(dim_gen_baseline_file $1)"
