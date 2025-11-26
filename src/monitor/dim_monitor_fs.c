@@ -44,7 +44,7 @@ dim_string_print_entry(dim_monitor_status, monitor_status, dim_monitor_status_pr
  * status to read: dim_measure_log_tree
  */
 dim_measure_log_entry(dim_monitor_log, monitor_ascii_runtime_measurements,
-		      &dim_monitor_handle.log);
+		      &dim_monitor_handle.log, ascii);
 
 static struct dim_entry *dim_monitor_files[] = {
 	&dim_monitor_measure_entry,

@@ -94,7 +94,10 @@ void dim_measure_log_destroy_tree(struct dim_measure_log_tree *root);
 int dim_measure_log_add(struct dim_measure_log_tree *root,
 			     const char *name_str,
 			     struct dim_digest *digest, int flag);
-int dim_measure_log_seq_show(struct seq_file *m, struct dim_measure_log *log);
+int dim_measure_log_seq_show_ascii(struct seq_file *m,
+				   struct dim_measure_log *log);
+int dim_measure_log_seq_show_binary(struct seq_file *m,
+				    struct dim_measure_log *info);
 void dim_measure_log_refresh(struct dim_measure_log_tree *root);
 
 #endif

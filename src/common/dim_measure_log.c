@@ -9,6 +9,8 @@
 #include "dim_safe_func.h"
 #include "dim_measure_log.h"
 
+#define DIM_TEMPLATE "ima-ng"
+
 /*
 static int dim_measure_name_rb_add(struct rb_root *root,
 				   struct dim_baseline *data,
@@ -57,7 +59,60 @@ static int cal_measure_log_digest(const char *name,
 	return crypto_shash_final(shash, info->log_digest.data);
 }
 
-int dim_measure_log_seq_show(struct seq_file *m, struct dim_measure_log *info)
+static void dim_putc(struct seq_file *m, const void *data, int datelen)
+{
+	while (datelen--)
+		seq_putc(m, *(char *)data++);
+}
+
+int dim_measure_log_seq_show_binary(struct seq_file *m,
+				    struct dim_measure_log *info)
+{
+	u32 pcr, len, name_len, digest_len;
+	char digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
+	const char *name = NULL;
+
+	/* Print slot index */
+	pcr = dim_rot_slot();
+	dim_putc(m, &pcr, sizeof(pcr));
+
+	/* template digest */
+	dim_putc(m, &info->log_digest.data, dim_digest_size(HASH_ALGO_SHA256));
+
+ 	/* template name */
+	len = strlen(DIM_TEMPLATE);
+	dim_putc(m, &len, sizeof(len));
+	dim_putc(m, DIM_TEMPLATE, len);
+
+	/* calculate the length of rest data */
+	digest_len = strlen(dim_hash_name(info->log_digest.algo)) + \
+		     strlen(":") + 1 + \
+		     dim_digest_size(info->log_digest.algo);
+
+	name = dim_measure_log_name(info);
+	name_len = strlen(name) + 1;
+	len = digest_len + name_len + sizeof(name_len) + sizeof(digest_len);
+
+	/* print len */
+	dim_putc(m, &len, sizeof(len));
+	/* digest buf*/
+	strcat(digest_buf, dim_hash_name(info->digest.algo));
+	strcat(digest_buf, ":");
+	strncpy(digest_buf + strlen(digest_buf) + 1, info->digest.data, dim_digest_size(info->log_digest.algo));
+	dim_putc(m, &digest_len, sizeof(digest_len));
+	dim_putc(m, digest_buf, digest_len);
+
+	/* measure log name */
+	dim_putc(m, &name_len, sizeof(name_len));
+	dim_putc(m, name, name_len);
+
+	/* to do list: measure log type*/
+
+	return 0;
+}
+
+int dim_measure_log_seq_show_ascii(struct seq_file *m,
+				   struct dim_measure_log *info)
 {
 	char log_digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
 	char digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
@@ -68,13 +123,15 @@ int dim_measure_log_seq_show(struct seq_file *m, struct dim_measure_log *info)
 	bin2hex(digest_buf, info->digest.data,
 		dim_digest_size(info->digest.algo));
 
-	seq_printf(m, "%d %s %s:%s %s %s\n",
+	seq_printf(m, "%d %s %s %s:%s %s %s\n",
 		   dim_rot_slot(),
 		   log_digest_buf,
+		   DIM_TEMPLATE,
 		   dim_hash_name(info->digest.algo),
 		   digest_buf,
 		   dim_measure_log_name(info),
 		   dim_measure_log_type_to_name(info->type));
+
 	return 0;
 }
 
