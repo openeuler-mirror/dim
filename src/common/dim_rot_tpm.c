@@ -12,13 +12,17 @@
 #include "dim_utils.h"
 
 #define DIM_PCR_MAX 128
+enum tpm_pcrs { TPM_PCR0 = 0, TPM_PCR8 = 8, TPM_PCR10 = 10 };
 
+/* TPM chip instance */
 static struct tpm_chip *dim_tpm_chip = NULL;
+/* Buffer for TPM digest extending */
 struct tpm_digest *dim_tpm_digests = NULL;
+/* TPM algorithm bank */
 static int dim_tpm_bank = 0;
+/* TPM pcr index */
 static unsigned int dim_tpm_pcr = 0;
 
-/* Parameter data is the pcr value */
 static int dim_tpm_init(struct dim_rot *rot, int algo, int pcr)
 {
 	int ret = 0;
@@ -37,7 +41,8 @@ static int dim_tpm_init(struct dim_rot *rot, int algo, int pcr)
 
 	dim_tpm_bank = -1;
 	for (i = 0; i < dim_tpm_chip->nr_allocated_banks; i++) {
-		dim_tpm_digests[i].alg_id = dim_tpm_chip->allocated_banks[i].alg_id;
+		dim_tpm_digests[i].alg_id =
+			dim_tpm_chip->allocated_banks[i].alg_id;
 		if (dim_tpm_chip->allocated_banks[i].crypto_id == algo)
 			dim_tpm_bank = i;
 
@@ -102,9 +107,67 @@ static void dim_tpm_destroy(struct dim_rot *rot)
 	dim_tpm_digests = NULL;
 }
 
+static int tpm_hash_algo(int algo)
+{
+	int tpm_algo = -1;
+
+	switch (algo) {
+	case HASH_ALGO_SHA256:
+		tpm_algo = TPM_ALG_SHA256;
+		break;
+	case HASH_ALGO_SM3_256:
+		tpm_algo = TPM_ALG_SM3_256;
+		break;
+	    default:
+		break;
+	}
+
+	return tpm_algo;
+}
+
+static int dim_tpm_calc_boot_aggregate_tfm(struct dim_digest *digest,
+					   struct crypto_shash *tfm)
+{
+	int ret = 0;
+	int i = 0;
+	struct tpm_digest d = { 0 };
+	SHASH_DESC_ON_STACK(shash, tfm);
+
+	shash->tfm = tfm;
+	ret = crypto_shash_init(shash);
+	if (ret < 0)
+		return ret;
+
+	/* cumulative digest over TPM registers 0-10 */
+	d.alg_id = tpm_hash_algo(digest->algo);
+	for (i = TPM_PCR0; i < TPM_PCR10; i++) {
+		ret = tpm_pcr_read(dim_tpm_chip, i, &d);
+		if (ret < 0)
+			return ret;
+
+		ret = crypto_shash_update(shash, d.digest,
+					  crypto_shash_digestsize(tfm));
+		if (ret < 0)
+			return ret;
+	}
+
+	return crypto_shash_final(shash, digest->data);
+}
+
 static int dim_tpm_calc_boot_aggregate(struct dim_digest *digest)
 {
-	return -ENXIO; // TODO
+	int ret = 0;
+	struct crypto_shash *tfm = NULL;
+
+	tfm = crypto_alloc_shash(dim_hash_name(digest->algo), 0, 0);
+	if (IS_ERR(tfm)) {
+		ret = PTR_ERR(tfm);
+		return ret;
+	}
+
+	ret = dim_tpm_calc_boot_aggregate_tfm(digest, tfm);
+	crypto_free_shash(tfm);
+	return ret;
 }
 
 struct dim_rot dim_rot_tpm = {
