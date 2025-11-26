@@ -9,6 +9,9 @@
 #include <asm/virtcca_cvm_guest.h>
 #include <crypto/hash_info.h>
 
+#include "dim_hash.h"
+#include "dim_rot.h"
+
 #define DEFAULT_CCA_REM_IDX 4
 static enum hash_algo virtcca_algo;
 static int dim_virtcca_enable = 0;
@@ -52,7 +55,7 @@ static int dim_virtcca_get_rem(struct dim_rot *rot)
 	return DEFAULT_CCA_REM_IDX; // TODO
 }
 
-static int dim_virtcca_extend(struct dim_digest *digests)
+static int dim_virtcca_extend(struct dim_rot *rot, struct dim_digest *digests)
 {
 	struct virtcca_cvm_measurement_extend cme;
 

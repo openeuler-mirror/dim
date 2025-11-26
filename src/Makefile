@@ -8,10 +8,8 @@ dim_core-objs += core/dim_core_fs.o
 dim_core-objs += core/dim_core_mem_pool.o
 dim_core-objs += core/dim_core_measure.o
 dim_core-objs += core/dim_core_symbol.o
-ifeq ($(DIM_CORE_SIGNATURE_SUPPORT), y)
 dim_core-objs += core/dim_core_sig.o
-ccflags-y += -DDIM_CORE_SIGNATURE_SUPPORT
-endif
+
 dim_core-objs += core/tasks/dim_core_measure_kernel.o
 dim_core-objs += core/tasks/dim_core_measure_module.o
 dim_core-objs += core/tasks/dim_core_measure_process/dim_vm_hash.o

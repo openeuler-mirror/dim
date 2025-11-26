@@ -143,7 +143,6 @@ static int calc_kernel_digest(struct dim_hash *hash, struct dim_digest *digest)
 /* If kernel doesn't support jumplabel, calculate text directly */
 static int calc_kernel_digest(struct dim_hash *hash, struct dim_digest *digest)
 {
-	int ret = 0;
 	uintptr_t stext = (uintptr_t)dim_core_kernel_symbol.stext;
 	uintptr_t etext = (uintptr_t)dim_core_kernel_symbol.etext;
 	SHASH_DESC_ON_STACK(shash, hash->tfm);

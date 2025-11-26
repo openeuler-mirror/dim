@@ -17,10 +17,12 @@ typedef void (*DIM_WALK_PROCESS_TREE)(struct task_struct *,
 typedef struct module *(*DIM_FIND_MODULE)(const char *);
 typedef struct task_struct *(*DIM_FIND_GET_TASK_BY_VPID)(pid_t);
 #endif
-#ifndef JUMP_LABEL_NOP_SIZE
-typedef int (*DIM_ARCH_JUMP_ENTRY_SIZE)(struct jump_entry *);
-#endif
 
+#ifdef CONFIG_JUMP_LABEL
+ #ifndef JUMP_LABEL_NOP_SIZE
+typedef int (*DIM_ARCH_JUMP_ENTRY_SIZE)(struct jump_entry *);
+ #endif
+#endif
 
 struct dim_core_kallsyms {
 	char *stext;

@@ -11,11 +11,18 @@
 #define DIM_ARRAY_LEN(ARR) (sizeof(ARR) / sizeof(ARR[0]))
 #define DIM_MAX_FILE_SIZE (10 * 1024 * 1024)
 
-#define dim_fmt(fmt) "%s: " fmt
+#define DIM_KERNEL "dim_kernel"
 
-#define dim_err(fmt, ...) pr_err(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
-#define dim_warn(fmt, ...) pr_warn(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
-#define dim_info(fmt, ...) pr_info(dim_fmt(fmt), THIS_MODULE->name, ##__VA_ARGS__)
+#ifdef CONFIG_MODULES
+#define DIM_FMT_FLAG (THIS_MODULE ? THIS_MODULE->name : DIM_KERNEL)
+#else
+#define DIM_FMT_FLAG DIM_KERNEL
+#endif
+
+#define dim_fmt(fmt) "%s: " fmt
+#define dim_err(fmt, ...) pr_err(dim_fmt(fmt), DIM_FMT_FLAG, ##__VA_ARGS__)
+#define dim_warn(fmt, ...) pr_warn(dim_fmt(fmt), DIM_FMT_FLAG, ##__VA_ARGS__)
+#define dim_info(fmt, ...) pr_info(dim_fmt(fmt), DIM_FMT_FLAG, ##__VA_ARGS__)
 #define dim_devel(fmt, ...)
 
 int dim_get_absolute_path(const char *path, const char **result);

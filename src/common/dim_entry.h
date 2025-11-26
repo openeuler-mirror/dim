@@ -24,6 +24,11 @@ struct dim_entry {
 	struct dentry *dentry;
 };
 
+#ifndef THIS_MODULE
+#define THIS_MODULE NULL
+#endif
+
+
 /* the file interface for trigger by 'echo 1 > file_path' */
 #define dim_trigger_entry(sname, fname, function)			\
 static ssize_t sname##_trigger(struct file *file,			\
