@@ -13,7 +13,8 @@ struct dim_rot {
 	void (*destroy)(struct dim_rot *rot);
 	int (*slot)(struct dim_rot *rot);
 	int (*extend)(struct dim_rot *rot, struct dim_digest *digest);
-	int (*calc_boot_aggregate)(struct dim_digest *digest);
+	int (*calc_boot_aggregate)(struct dim_digest *digest,
+				   struct dim_hash *hash);
 };
 
 #ifdef CONFIG_TCG_TPM
@@ -25,7 +26,7 @@ extern struct dim_rot dim_rot_virtcca;
 
 int dim_rot_init(const char *name, int algo, int slot);
 int dim_rot_extend(struct dim_digest *digest);
-int dim_calc_boot_aggregate(struct dim_digest *digest);
+int dim_calc_boot_aggregate(struct dim_digest *digest, struct dim_hash *hash);
 int dim_rot_slot(void);
 void dim_rot_destroy(void);
 

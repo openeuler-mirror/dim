@@ -45,7 +45,7 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 
 	/* 3. init baseline data (static and dynamic) */
 	m->measure_only = cfg->measure_only;
-	/* for measure_only mode, no need to process baseline */
+	/* for measure_only mode, no need to process baseline data */
 	if (!m->measure_only) {
 		ret = dim_baseline_init_tree(cfg->sta_malloc, cfg->sta_free,
 					     &m->static_baseline);

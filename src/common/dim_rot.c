@@ -5,6 +5,7 @@
 #include "dim_utils.h"
 #include "dim_rot.h"
 
+/* Selected RoT device */
 static struct dim_rot *dim_rot_prefered = NULL;
 
 /* Support list: TPM, virtCCA */
@@ -40,21 +41,20 @@ int dim_rot_init(const char *name, int algo, int slot)
 	}
 
 	if (dim_rot_prefered == NULL) {
-		/* If not find, use the default device */
-		dim_rot_prefered = dim_supported_rots[0];
 		dim_info("Cannot find the specified RoT %s\n",
 			 dim_rot_prefered->name);
-
-		return -EINVAL;
+		return -ENODEV;
 	}
 
 	ret = dim_rot_prefered->init(dim_rot_prefered, algo, slot);
-	if (ret < 0)
+	if (ret < 0) {
 		dim_err("Failed to initialize RoT device %s: %d\n",
 			dim_rot_prefered->name, ret);
-	else
-		dim_info("Succeed to initialize RoT device %s\n",
+		dim_rot_prefered = NULL;
+	} else {
+		dim_info("Initialize RoT device: %s\n",
 			 dim_rot_prefered->name);
+	}
 
 	return ret;
 }
@@ -67,12 +67,12 @@ int dim_rot_extend(struct dim_digest *digest)
 	return dim_rot_prefered->extend(dim_rot_prefered, digest);
 }
 
-int dim_calc_boot_aggregate(struct dim_digest *digest)
+int dim_calc_boot_aggregate(struct dim_digest *digest, struct dim_hash *hash)
 {
 	if (dim_rot_prefered == NULL)
-		return -ENXIO;
+		return -ENODEV;
 
-	return dim_rot_prefered->calc_boot_aggregate(digest);
+	return dim_rot_prefered->calc_boot_aggregate(digest, hash);
 }
 
 void dim_rot_destroy(void)

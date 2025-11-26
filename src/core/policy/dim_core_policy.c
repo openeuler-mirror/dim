@@ -174,7 +174,7 @@ int dim_core_policy_load(void)
 
 	if (!RB_EMPTY_ROOT(&policy_root))
 		dim_core_policy_destroy();
-#ifdef DIM_CORE_SIGNATURE_SUPPORT
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	ret = dim_read_verify_file(NULL, DIM_POLICY_PATH, &buf);
 #else
 	ret = dim_read_file(NULL, DIM_POLICY_PATH, &buf);

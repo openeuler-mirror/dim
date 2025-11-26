@@ -9,6 +9,7 @@
 #include <linux/fs.h>
 #include <linux/vmalloc.h>
 #include <keys/asymmetric-type.h>
+#include <linux/kernel_read_file.h>
 
 #include "dim_hash.h"
 #include "dim_utils.h"
@@ -62,7 +63,7 @@ static int dim_core_sig_verify(const char *buf, loff_t buf_len,
 	return verify_signature(dim_core_key, &key_sig);
 }
 
-int dim_read_file(struct path *root, const char *name, void **buf)
+int dim_read_verify_file(struct path *root, const char *name, void **buf)
 {
 	int ret = 0;
 	char *sig_name = NULL;
@@ -124,7 +125,7 @@ int dim_core_sig_init(void)
 	}
 
 	ret = kernel_read_file_from_path(DIM_CORE_CERT_PATH, 0, &data,
-					 DIM_CORE_MAX_FILE_SIZE, NULL,
+					 DIM_MAX_FILE_SIZE, NULL,
 					 READING_X509_CERTIFICATE);
 	if (ret < 0) {
 		dim_err("failed to read DIM cert file: %ld\n", ret);

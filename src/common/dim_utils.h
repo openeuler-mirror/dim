@@ -14,7 +14,7 @@
 #define DIM_KERNEL "dim_kernel"
 
 #ifdef CONFIG_MODULES
-#define DIM_FMT_FLAG (THIS_MODULE ? THIS_MODULE->name : DIM_KERNEL)
+#define DIM_FMT_FLAG (THIS_MODULE->name)
 #else
 #define DIM_FMT_FLAG DIM_KERNEL
 #endif

@@ -12,7 +12,7 @@
 #include "dim_utils.h"
 
 #define DIM_PCR_MAX 128
-enum tpm_pcrs { TPM_PCR0 = 0, TPM_PCR8 = 8, TPM_PCR10 = 10 };
+enum tpm_pcrs { TPM_PCR0 = 0, TPM_PCR10 = 10 };
 
 /* TPM chip instance */
 static struct tpm_chip *dim_tpm_chip = NULL;
@@ -125,15 +125,15 @@ static int tpm_hash_algo(int algo)
 	return tpm_algo;
 }
 
-static int dim_tpm_calc_boot_aggregate_tfm(struct dim_digest *digest,
-					   struct crypto_shash *tfm)
+static int dim_tpm_calc_boot_aggregate(struct dim_digest *digest,
+				       struct dim_hash *hash)
 {
 	int ret = 0;
 	int i = 0;
 	struct tpm_digest d = { 0 };
-	SHASH_DESC_ON_STACK(shash, tfm);
+	SHASH_DESC_ON_STACK(shash, hash->tfm);
 
-	shash->tfm = tfm;
+	shash->tfm = hash->tfm;
 	ret = crypto_shash_init(shash);
 	if (ret < 0)
 		return ret;
@@ -146,28 +146,12 @@ static int dim_tpm_calc_boot_aggregate_tfm(struct dim_digest *digest,
 			return ret;
 
 		ret = crypto_shash_update(shash, d.digest,
-					  crypto_shash_digestsize(tfm));
+					  dim_digest_size(digest->algo));
 		if (ret < 0)
 			return ret;
 	}
 
 	return crypto_shash_final(shash, digest->data);
-}
-
-static int dim_tpm_calc_boot_aggregate(struct dim_digest *digest)
-{
-	int ret = 0;
-	struct crypto_shash *tfm = NULL;
-
-	tfm = crypto_alloc_shash(dim_hash_name(digest->algo), 0, 0);
-	if (IS_ERR(tfm)) {
-		ret = PTR_ERR(tfm);
-		return ret;
-	}
-
-	ret = dim_tpm_calc_boot_aggregate_tfm(digest, tfm);
-	crypto_free_shash(tfm);
-	return ret;
 }
 
 struct dim_rot dim_rot_tpm = {

@@ -31,7 +31,7 @@ static const char *dim_measure_log_type_name[LOG_LAST] = {
 	[LOG_DYNAMIC_BASELINE] = "[dynamic baseline]",
 	[LOG_TAMPERED] = "[tampered]",
 	[LOG_MATCHED] = "[matched]",
-	[LOC_MEASURE] = "[measure]"
+	[LOC_MEASURE] = "" /* No extra flag, keep consistent with IMA */
 };
 
 struct dim_measure_log_tree {

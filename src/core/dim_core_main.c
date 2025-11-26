@@ -11,7 +11,7 @@
 #include "dim_core_fs.h"
 #include "dim_core_measure.h"
 #include "dim_core_mem_pool.h"
-#ifdef DIM_CORE_SIGNATURE_SUPPORT
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 #include "dim_core_sig.h"
 #endif
 
@@ -41,13 +41,14 @@ MODULE_PARM_DESC(measure_only, "Only do measurement, no verification");
 
 /* special measurement configuration for dim_core */
 static unsigned int measure_interval = 0;
-static bool signature = false;
-
 module_param(measure_interval, uint, 0);
 MODULE_PARM_DESC(measure_interval, "Interval time (min) for automatic measurement");
 
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
+static bool signature = false;
 module_param(signature, bool, 0);
 MODULE_PARM_DESC(signature, "Require signature for policy and static baseline");
+#endif
 
 static int __init dim_core_init(void)
 {
@@ -64,7 +65,7 @@ static int __init dim_core_init(void)
 		dim_err("failed to initialize dim memory pool: %d\n", ret);
 		goto err;
 	}
-#ifdef DIM_CORE_SIGNATURE_SUPPORT
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature) {
 		ret = dim_core_sig_init();
 		if (ret < 0) {
@@ -90,7 +91,7 @@ err:
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-#ifdef DIM_CORE_SIGNATURE_SUPPORT
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
 #endif
@@ -102,7 +103,7 @@ static void __exit dim_core_exit(void)
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-#ifdef DIM_CORE_SIGNATURE_SUPPORT
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
 #endif

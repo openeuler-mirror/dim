@@ -123,14 +123,20 @@ int dim_measure_log_seq_show_ascii(struct seq_file *m,
 	bin2hex(digest_buf, info->digest.data,
 		dim_digest_size(info->digest.algo));
 
-	seq_printf(m, "%d %s %s %s:%s %s %s\n",
+	seq_printf(m, "%d %s %s %s:%s %s",
 		   dim_rot_slot(),
 		   log_digest_buf,
 		   DIM_TEMPLATE,
 		   dim_hash_name(info->digest.algo),
 		   digest_buf,
-		   dim_measure_log_name(info),
-		   dim_measure_log_type_to_name(info->type));
+		   dim_measure_log_name(info));
+
+	/* Print the log flag */
+	if (info->type == LOC_MEASURE)
+		seq_printf(m, "\n");
+	else
+		seq_printf(m, " %s\n",
+			   dim_measure_log_type_to_name(info->type));
 
 	return 0;
 }
@@ -325,12 +331,28 @@ void dim_measure_log_destroy_tree(struct dim_measure_log_tree *root)
 	write_unlock(&root->lock);
 }
 
+static int calc_boot_aggregate(struct dim_measure_log_tree *root)
+{
+	int ret = 0;
+	struct dim_digest boot_aggregate = {
+		.algo = root->hash->algo,
+	};
+
+	ret = dim_calc_boot_aggregate(&boot_aggregate, root->hash);
+	if (ret < 0)
+		dim_warn("Failed to calculate boot_aggregate: %d\n", ret);
+
+	ret = dim_measure_log_add(root, "boot_aggregate",
+				  &boot_aggregate, LOC_MEASURE);
+	if (ret < 0)
+		dim_warn("Failed to add boot_aggregate log: %d\n", ret);
+
+	return 0;
+}
+
 int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
 			      struct dim_hash *hash, unsigned int cap)
 {
-	int ret = 0;
-	struct dim_digest boot_aggregate = { 0 };
-
 	if (root == NULL || hash == NULL)
 		return -EINVAL;
 
@@ -339,15 +361,6 @@ int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
 	root->hash = hash;
 	root->rb_root = RB_ROOT;
 	root->cap = cap;
-	boot_aggregate.algo = hash->algo;
 
-	ret = dim_calc_boot_aggregate(&boot_aggregate);
-	if (ret < 0)
-		dim_warn("Failed to calculate boot_aggregate\n");
-
-	ret = dim_measure_log_add(root, "boot_aggregate", &boot_aggregate, LOG_STATIC_BASELINE);
-	if (ret < 0)
-		dim_err("Failed to add boot_aggregate\n");
-
-	return ret;
+	return calc_boot_aggregate(root);
 }

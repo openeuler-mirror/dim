@@ -9,13 +9,20 @@
 #include <asm/virtcca_cvm_guest.h>
 #include <crypto/hash_info.h>
 
+#include "dim_utils.h"
 #include "dim_hash.h"
 #include "dim_rot.h"
 
-#define DEFAULT_CCA_REM_IDX 4
+#define DIM_VIRTCCA_REM 4
+
+/* Algorithm of virtCCA */
 static enum hash_algo virtcca_algo;
-static int dim_virtcca_enable = 0;
-static int dim_virtcca_init_algo(int algo)
+/* Enable flag of virtCCA */
+static int virtcca_enable = 0;
+/* virtCCA REM index */
+static int virtcca_rem_idx = 0;
+
+static int dim_virtcca_init_algo(void)
 {
 	unsigned long result;
 	struct virtcca_cvm_config cfg = { 0 };
@@ -27,72 +34,71 @@ static int dim_virtcca_init_algo(int algo)
 	}
 
 	/* 0: SHA256, 1: SHA512 */
-	virtcca_algo = cfg.algorithm ? HASH_ALGO_SHA512 : HASH_ALGO_SHA256;
-
+	virtcca_algo = cfg.algorithm ? HASH_ALGO_SHA512 :
+				       HASH_ALGO_SHA256;
 	return 0;
 }
 
-static int dim_virtcca_init(struct dim_rot *rot, int algo, int rem) // TODO
+static int dim_virtcca_init(struct dim_rot *rot, int algo, int rem)
 {
-	int rc;
+	int ret = 0;
 
-	if (!is_virtcca_cvm_world() || tsi_get_version() == SMCCC_RET_NOT_SUPPORTED)
+	if (!is_virtcca_cvm_world() ||
+	    tsi_get_version() == SMCCC_RET_NOT_SUPPORTED)
 		return -ENODEV;
 
-	rc = dim_virtcca_init_algo(virtcca_algo);
-	if (rc)
-		return rc;
+	if (rem != DIM_VIRTCCA_REM) {
+		dim_warn("Now DIM can only use REM4, reset the REM index\n");
+		virtcca_rem_idx = DIM_VIRTCCA_REM;
+	}
 
-	dim_virtcca_enable = 1;
+	ret = dim_virtcca_init_algo();
+	if (ret < 0)
+		return ret;
+
+	virtcca_enable = 1;
+	virtcca_rem_idx = rem;
 	return 0;
 }
 
 static int dim_virtcca_get_rem(struct dim_rot *rot)
 {
-	if (dim_virtcca_enable == 0)
+	if (virtcca_enable == 0)
 		return 0;
 
-	return DEFAULT_CCA_REM_IDX; // TODO
+	return virtcca_rem_idx;
 }
 
-static int dim_virtcca_extend(struct dim_rot *rot, struct dim_digest *digests)
+static int dim_virtcca_extend(struct dim_rot *rot, struct dim_digest *digest)
 {
-	struct virtcca_cvm_measurement_extend cme;
+	struct virtcca_cvm_measurement_extend cme = { 0 };
 
-	if (dim_virtcca_enable == 0)
-		return -EINVAL;
+	if (virtcca_enable == 0)
+		return 0;
 
-	// Now, in virtCCA, DIM can only use REM4
-	cme.index = DEFAULT_CCA_REM_IDX;
+	cme.index = virtcca_rem_idx;
 	cme.size = hash_digest_size[virtcca_algo];
-
-	/*
-	 * virtcca has only one slot, so the algorithm of digests_arg[0] is always
-	 * virtcca_algo according to the init process of ima_init_crypto() and
-	 * ima_init_digets()
-	 */
-	memcpy(cme.value, digests[0].data, cme.size);
+	memcpy(cme.value, digest->data, dim_digest_size(digest->algo));
 
 	return tsi_measurement_extend(&cme) == TSI_SUCCESS ? 0 : -EFAULT;
 }
 
-static int dim_virtcca_calc_boot_aggregate(struct dim_digest *digest)
+static int dim_virtcca_calc_boot_aggregate(struct dim_digest *digest,
+					   struct dim_hash *hash)
 {
-	unsigned long result;
-	struct virtcca_cvm_measurement cm = { 0 };
-
-	digest->algo = virtcca_algo;
+	unsigned long result = 0;
+	struct virtcca_cvm_measurement cm = {
+		.index = RIM_MEASUREMENT_SLOT,
+	};
 
 	/* Read the measurement result of RIM as the boot aggregate */
-
-	cm.index = RIM_MEASUREMENT_SLOT;
-
 	result = tsi_measurement_read(&cm);
 	if (result != TSI_SUCCESS) {
-		pr_err("Error reading cvm measurement 0 for boot aggregate\n");
+		pr_err("Failed to read RIM 0 for boot aggregate\n");
 		return -EFAULT;
 	}
 
+	digest->algo = virtcca_algo;
 	memcpy(digest->data, cm.value, dim_digest_size(virtcca_algo));
 	return 0;
 }

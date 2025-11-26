@@ -147,7 +147,11 @@ int dim_core_static_baseline_load(struct dim_measure *m)
 	filp_close(file, NULL);
 
 	list_for_each_entry_safe(entry, tmp, &ctx.name_list, list) {
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
+		ret = dim_read_verify_file(&kpath, entry->name, &buf);
+#else
 		ret = dim_read_file(&kpath, entry->name, &buf);
+#endif
 		if (ret < 0 || buf == NULL) {
 			dim_err("failed to read and verify %s: %d\n", entry->name, ret);
 			dim_kfree(entry);
