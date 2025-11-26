@@ -11,7 +11,7 @@
 #include "dim_baseline.h"
 #include "dim_hash.h"
 #include "dim_measure_log.h"
-#include "dim_tpm.h"
+#include "dim_rot.h"
 #include "dim_utils.h"
 
 #define DIM_MEASURE 0
@@ -41,6 +41,8 @@ struct dim_measure_cfg {
 	unsigned int schedule_ms;
 	/* PCR number for TPM extending */
 	unsigned int pcr;
+	/* device to extend measure log */
+	char *rot;
 	/* max measure log number */
 	unsigned int log_cap;
 	/* memory function for baseline store */
@@ -58,8 +60,6 @@ struct dim_measure {
 	struct mutex measure_lock;
 	/* measure hash algorithm */
 	struct dim_hash hash;
-	/* TPM chip handle */
-	struct dim_tpm tpm;
 	/* measure log */
 	struct dim_measure_log_tree log;
 	/* measure baseline */

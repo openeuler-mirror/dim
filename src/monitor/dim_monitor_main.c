@@ -24,6 +24,9 @@ MODULE_PARM_DESC(measure_hash, "Hash algorithm for measurement");
 module_param_named(measure_pcr, cfg.pcr, uint, 0);
 MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
 
+module_param_named(measure_rot, cfg.rot, charp, 0);
+MODULE_PARM_DESC(measure_rot, "Rot device to extend measure log");
+
 static int __init dim_monitor_init(void)
 {
 	int ret;
