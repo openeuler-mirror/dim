@@ -196,6 +196,12 @@ int dim_measure_process_static_result(struct dim_measure *m, int mode,
 	    !is_valid_mode(mode))
 		return -EINVAL;
 
+	/* For measure only mode, add measure log directly */
+	if (m->measure_only) {
+		*log_flag = LOC_MEASURE;
+		return measure_log_add(m, name, digest, LOC_MEASURE);
+	}
+
 	return mode == DIM_BASELINE ?
 		process_static_baseline(m, name, digest, log_flag) :
 		process_static_measure(m, name, digest, log_flag);
@@ -209,6 +215,10 @@ int dim_measure_process_dynamic_result(struct dim_measure *m, int mode,
 	if (m == NULL || name == NULL || digest == NULL ||
 	    !is_valid_mode(mode))
 		return -EINVAL;
+
+	/* For measure only mode, add measure log directly */
+	if (m->measure_only)
+		return measure_log_add(m, name, digest, LOC_MEASURE);
 
 	return mode == DIM_BASELINE ?
 		process_dynamic_baseline(m, name, digest, log_flag) :

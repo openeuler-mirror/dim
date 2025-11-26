@@ -44,18 +44,22 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 	}
 
 	/* 3. init baseline data (static and dynamic) */
-	ret = dim_baseline_init_tree(cfg->sta_malloc, cfg->sta_free,
-				     &m->static_baseline);
-	if (ret < 0) {
-		dim_err("failed to init static baseline root: %d\n", ret);
-		goto err;
-	}
+	m->measure_only = cfg->measure_only;
+	/* for measure_only mode, no need to process baseline */
+	if (!m->measure_only) {
+		ret = dim_baseline_init_tree(cfg->sta_malloc, cfg->sta_free,
+					     &m->static_baseline);
+		if (ret < 0) {
+			dim_err("failed to init static baseline: %d\n", ret);
+			goto err;
+		}
 
-	ret = dim_baseline_init_tree(cfg->dyn_malloc, cfg->dyn_free,
-				     &m->dynamic_baseline);
-	if (ret < 0) {
-		dim_err("failed to init dynamic baseline root: %d\n", ret);
-		goto err;
+		ret = dim_baseline_init_tree(cfg->dyn_malloc, cfg->dyn_free,
+					     &m->dynamic_baseline);
+		if (ret < 0) {
+			dim_err("failed to init dynamic baseline: %d\n", ret);
+			goto err;
+		}
 	}
 
 	/* 4. init measure log */
@@ -71,6 +75,7 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 
 	/* 6. set initial status */
 	atomic_set(&m->status, MEASURE_STATUS_NO_BASELINE);
+
 	return 0;
 err:
 	dim_measure_destroy(m);

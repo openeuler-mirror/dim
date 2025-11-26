@@ -35,6 +35,8 @@ enum dim_measure_status {
 
 /* the common configuration for measurement */
 struct dim_measure_cfg {
+	/* no baseline, only measure */
+	bool measure_only;
 	/* hash algorithm for measurement */
 	char *alg_name;
 	/* schedule time (ms) after one valid measurement */
@@ -54,6 +56,8 @@ struct dim_measure_cfg {
 
 /* the dim measurement global handle */
 struct dim_measure {
+	/* no baseline, only measure */
+	bool measure_only;
 	/* schedule time (jittfies) after one valid measurement */
 	unsigned long schedule_jiffies;
 	/* lock to prevent concurrent measurement */

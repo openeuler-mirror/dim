@@ -42,7 +42,7 @@ void dim_measure_task_measure(int mode, struct dim_measure *m)
 		MEASURE_STATUS_BASELINE_RUNNING :
 		MEASURE_STATUS_MEASURE_RUNNING);
 
-	if (mode == DIM_BASELINE && m->baseline_prepare != NULL) {
+	if (mode == DIM_BASELINE) {
 		ret = m->baseline_prepare(m);
 		if (ret < 0) {
 			atomic_set(&m->status, MEASURE_STATUS_ERROR);

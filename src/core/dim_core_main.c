@@ -36,6 +36,9 @@ MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
 module_param_named(measure_rot, cfg.rot, charp, 0);
 MODULE_PARM_DESC(measure_rot, "Rot device to extend measure log");
 
+module_param_named(measure_only, cfg.measure_only, bool, 0);
+MODULE_PARM_DESC(measure_only, "Only do measurement, no verification");
+
 /* special measurement configuration for dim_core */
 static unsigned int measure_interval = 0;
 static bool signature = false;

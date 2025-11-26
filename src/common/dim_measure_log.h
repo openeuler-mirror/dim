@@ -21,6 +21,7 @@ enum dim_measure_log_type {
 	LOG_DYNAMIC_BASELINE,
 	LOG_TAMPERED,
 	LOG_MATCHED,
+	LOC_MEASURE,
 	LOG_LAST,
 };
 
@@ -30,6 +31,7 @@ static const char *dim_measure_log_type_name[LOG_LAST] = {
 	[LOG_DYNAMIC_BASELINE] = "[dynamic baseline]",
 	[LOG_TAMPERED] = "[tampered]",
 	[LOG_MATCHED] = "[matched]",
+	[LOC_MEASURE] = "[measure]"
 };
 
 struct dim_measure_log_tree {
