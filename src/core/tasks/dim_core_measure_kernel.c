@@ -3,10 +3,13 @@
  */
 
 #include <linux/kallsyms.h>
-#include <linux/jump_label.h>
 #include <linux/sort.h>
 #include <linux/vmalloc.h>
 #include <linux/utsname.h>
+
+#ifdef CONFIG_JUMP_LABEL
+#include <linux/jump_label.h>
+#endif
 
 #include "dim_measure.h"
 
@@ -15,6 +18,8 @@
 #include "dim_core_policy.h"
 
 #include "dim_core_measure_task.h"
+
+#ifdef CONFIG_JUMP_LABEL
 
 /* max size of x86 */
 #define DIM_JUMP_LABEL_NOP_SIZE_MAX 5
@@ -134,6 +139,23 @@ static int calc_kernel_digest(struct dim_hash *hash, struct dim_digest *digest)
 	dim_vfree(jcode_sort);
 	return ret;
 }
+#else
+/* If kernel doesn't support jumplabel, calculate text directly */
+static int calc_kernel_digest(struct dim_hash *hash, struct dim_digest *digest)
+{
+	int ret = 0;
+	uintptr_t stext = (uintptr_t)dim_core_kernel_symbol.stext;
+	uintptr_t etext = (uintptr_t)dim_core_kernel_symbol.etext;
+	SHASH_DESC_ON_STACK(shash, hash->tfm);
+
+	shash->tfm = hash->tfm;
+	if (shash->tfm == NULL || stext >= etext)
+		return -EINVAL;
+
+	return crypto_shash_digest(shash, (char *)stext, etext - stext,
+				   digest->data);
+}
+#endif
 
 static int kernel_text_measure(int mode, struct dim_measure *m)
 {

@@ -5,6 +5,7 @@
 #include <linux/fs.h>
 #include <linux/err.h>
 #include <linux/namei.h>
+#include <linux/kernel_read_file.h>
 
 #include "dim_safe_func.h"
 #include "dim_utils.h"
@@ -98,5 +99,35 @@ out:
 	if (line_buf != NULL)
 		dim_kfree(line_buf);
 
+	return ret;
+}
+
+int dim_read_file(struct path *root, const char *name, void **buf)
+{
+	int ret = 0;
+	struct file *file = NULL;
+
+	if (root == NULL) {
+		ret = kernel_read_file_from_path(name, 0, buf,
+						  DIM_MAX_FILE_SIZE,
+						  NULL, READING_UNKNOWN);
+#ifdef DIM_DEBUG_MEMORY_LEAK
+		if (*buf != NULL)
+			dim_alloc_debug_inc();
+#endif
+		return ret;
+	}
+
+	file = file_open_root(root, name, O_RDONLY, 0);
+	if (IS_ERR(file))
+		return PTR_ERR(file);
+
+	ret = kernel_read_file(file, 0, buf, DIM_MAX_FILE_SIZE,
+			       NULL, READING_UNKNOWN);
+#ifdef DIM_DEBUG_MEMORY_LEAK
+	if (*buf != NULL)
+		dim_alloc_debug_inc();
+#endif
+	(void)filp_close(file, NULL);
 	return ret;
 }

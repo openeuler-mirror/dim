@@ -11,7 +11,9 @@
 #include "dim_core_fs.h"
 #include "dim_core_measure.h"
 #include "dim_core_mem_pool.h"
+#ifdef DIM_CORE_SIGNATURE_SUPPORT
 #include "dim_core_sig.h"
+#endif
 
 /* common measurement configuration */
 static struct dim_measure_cfg cfg = {
@@ -59,7 +61,7 @@ static int __init dim_core_init(void)
 		dim_err("failed to initialize dim memory pool: %d\n", ret);
 		goto err;
 	}
-
+#ifdef DIM_CORE_SIGNATURE_SUPPORT
 	if (signature) {
 		ret = dim_core_sig_init();
 		if (ret < 0) {
@@ -67,7 +69,7 @@ static int __init dim_core_init(void)
 			goto err;
 		}
 	}
-
+#endif
 	ret = dim_core_measure_init(&cfg, measure_interval);
 	if (ret < 0) {
 		dim_err("failed to initialize dim measurement: %d\n", ret);
@@ -85,10 +87,10 @@ err:
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-
+#ifdef DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
-
+#endif
 	return ret;
 }
 
@@ -97,9 +99,10 @@ static void __exit dim_core_exit(void)
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-
+#ifdef DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
+#endif
 
 #ifdef DIM_DEBUG_MEMORY_LEAK
 	dim_check_memory_leak();

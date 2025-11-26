@@ -9,6 +9,7 @@
 #include <linux/path.h>
 
 #define DIM_ARRAY_LEN(ARR) (sizeof(ARR) / sizeof(ARR[0]))
+#define DIM_MAX_FILE_SIZE (10 * 1024 * 1024)
 
 #define dim_fmt(fmt) "%s: " fmt
 
@@ -19,5 +20,6 @@
 
 int dim_get_absolute_path(const char *path, const char **result);
 int dim_parse_line_buf(char *buf, loff_t len, int (*line_parser)(char *, int, void *), void *data);
+int dim_read_file(struct path *root, const char *name, void **buf);
 
 #endif

@@ -9,10 +9,8 @@ static void call_measure_func(int mode, struct dim_measure_task *t,
 {
 	int ret = 0;
 	
-	if (t->measure == NULL) {
-		dim_warn("no measure function in %s task", t->name);
+	if (t->measure == NULL)
 		return;
-	}
 
 	dim_info("start to call %s measure task\n", t->name);
 	ret = t->measure(mode, m);

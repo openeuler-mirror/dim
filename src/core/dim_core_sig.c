@@ -8,7 +8,6 @@
 #include <linux/cred.h>
 #include <linux/fs.h>
 #include <linux/vmalloc.h>
-#include <linux/kernel_read_file.h>
 #include <keys/asymmetric-type.h>
 
 #include "dim_hash.h"
@@ -35,35 +34,6 @@ static char *add_suffix(const char *str, const char *suffix)
 	return buf;
 }
 
-static int read_file_root(struct path *root, const char *name, void **buf)
-{
-	int ret = 0;
-	struct file *file = NULL;
-
-	if (root == NULL) {
-		ret = kernel_read_file_from_path(name, 0, buf,
-						  DIM_CORE_MAX_FILE_SIZE,
-						  NULL, READING_UNKNOWN);
-#ifdef DIM_DEBUG_MEMORY_LEAK
-		if (*buf != NULL)
-			dim_alloc_debug_inc();
-#endif
-		return ret;
-	}
-
-	file = file_open_root(root, name, O_RDONLY, 0);
-	if (IS_ERR(file))
-		return PTR_ERR(file);
-
-	ret = kernel_read_file(file, 0, buf, DIM_CORE_MAX_FILE_SIZE,
-			       NULL, READING_UNKNOWN);
-#ifdef DIM_DEBUG_MEMORY_LEAK
-	if (*buf != NULL)
-		dim_alloc_debug_inc();
-#endif
-	(void)filp_close(file, NULL);
-	return ret;
-}
 
 static int dim_core_sig_verify(const char *buf, loff_t buf_len,
 			       const char *sbuf, loff_t sbuf_len)
@@ -92,7 +62,7 @@ static int dim_core_sig_verify(const char *buf, loff_t buf_len,
 	return verify_signature(dim_core_key, &key_sig);
 }
 
-int dim_read_verify_file(struct path *root, const char *name, void **buf)
+int dim_read_file(struct path *root, const char *name, void **buf)
 {
 	int ret = 0;
 	char *sig_name = NULL;
@@ -108,7 +78,7 @@ int dim_read_verify_file(struct path *root, const char *name, void **buf)
 	if (sig_name == NULL)
 		return -ENOMEM;
 
-	ret = read_file_root(root, name, &file_buf);
+	ret = dim_read_file(root, name, &file_buf);
 	if (ret < 0)
 		goto out;
 
@@ -118,7 +88,7 @@ int dim_read_verify_file(struct path *root, const char *name, void **buf)
 	if (dim_core_key == NULL)
 		goto out; /* no need to verify signature */
 
-	ret = read_file_root(root, sig_name, &sig_buf);
+	ret = dim_read_file(root, sig_name, &sig_buf);
 	if (ret < 0)
 		goto out;
 

@@ -174,8 +174,11 @@ int dim_core_policy_load(void)
 
 	if (!RB_EMPTY_ROOT(&policy_root))
 		dim_core_policy_destroy();
-
+#ifdef DIM_CORE_SIGNATURE_SUPPORT
 	ret = dim_read_verify_file(NULL, DIM_POLICY_PATH, &buf);
+#else
+	ret = dim_read_file(NULL, DIM_POLICY_PATH, &buf);
+#endif
 	if (ret < 0 || buf == NULL) {
 		dim_err("failed to read policy file: %d\n", ret);
 		return ret;

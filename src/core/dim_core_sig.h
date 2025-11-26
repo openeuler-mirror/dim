@@ -7,7 +7,6 @@
 
 #include <linux/key.h>
 
-#define DIM_CORE_MAX_FILE_SIZE (10 * 1024 * 1024)
 #define DIM_CORE_KEYRING_NAME "_dim"
 #define DIM_CORE_CERT_PATH "/etc/keys/x509_dim.der"
 #define DIM_CORE_SIG_FILE_SUFFIX ".sig"
