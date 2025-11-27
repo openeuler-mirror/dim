@@ -76,8 +76,13 @@ int dim_measure_log_seq_show_binary(struct seq_file *m,
 	pcr = dim_rot_slot();
 	dim_putc(m, &pcr, sizeof(pcr));
 
-	/* template digest */
-	dim_putc(m, &info->log_digest.data, dim_digest_size(HASH_ALGO_SHA256));
+	/* template digest
+	 * Note: This length does not match the actual value. It is currently
+	 * specified as SHA1 for compatibility with some remote attestation
+	 * tools. However, the digest value of the measurement log is not
+	 * actually used in the attestation.
+	 * */
+	dim_putc(m, &info->log_digest.data, dim_digest_size(HASH_ALGO_SHA1));
 
  	/* template name */
 	len = strlen(DIM_TEMPLATE);
