@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+#ifdef CONFIG_MODULES
 
 #include <linux/module.h>
 #include <linux/version.h>
@@ -16,7 +17,6 @@
 
 #include "dim_core_measure_task.h"
 
-#ifdef CONFIG_MODULES
 struct module_text_measure_ctx {
 	struct dim_measure *m;
 	int mode;
@@ -109,15 +109,11 @@ static int module_text_measure(int mode, struct dim_measure *m)
 	return dim_core_policy_walk(measure_module, &ctx);
 }
 
-#endif
-
 struct dim_measure_task dim_core_measure_task_module_text = {
 	.name = "dim_core_measure_task_module_text",
 	.init = NULL,
 	.destroy = NULL,
-#ifdef CONFIG_MODULES
 	.measure = module_text_measure,
-#else
-	.measure = NULL,
-#endif
 };
+
+#endif

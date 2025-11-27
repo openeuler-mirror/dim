@@ -14,7 +14,9 @@
 static struct dim_measure_task *dim_core_tasks[] = {
 	&dim_core_measure_task_user_text,
 	&dim_core_measure_task_kernel_text,
+#ifdef CONFIG_MODULES
 	&dim_core_measure_task_module_text,
+#endif
 };
 
 /* the global measurement handle */
