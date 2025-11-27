@@ -37,11 +37,9 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 	}
 
 	/* 2. init RoT, dont break if init fail */
-	if (cfg->pcr > 0) {
-		ret = dim_rot_init(cfg->rot, HASH_ALGO_SHA256, cfg->pcr);
-		if (ret < 0)
-			dim_warn("failed to init RoT device: %d\n", ret);
-	}
+	ret = dim_rot_init(cfg->rot, HASH_ALGO_SHA256, cfg->pcr);
+	if (ret < 0)
+		dim_warn("failed to init RoT device: %d\n", ret);
 
 	/* 3. init baseline data (static and dynamic) */
 	m->measure_only = cfg->measure_only;
