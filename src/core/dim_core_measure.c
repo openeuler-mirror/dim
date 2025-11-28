@@ -14,7 +14,9 @@
 static struct dim_measure_task *dim_core_tasks[] = {
 	&dim_core_measure_task_user_text,
 	&dim_core_measure_task_kernel_text,
+#ifdef CONFIG_MODULES
 	&dim_core_measure_task_module_text,
+#endif
 };
 
 /* the global measurement handle */
@@ -100,6 +102,10 @@ static int baseline_prepare(struct dim_measure *m)
 		return ret;
 	}
 
+	/* For measure_only mode, we only need to reload policy */
+	if (m->measure_only)
+		return 0;
+
 	/* 2. clear dim baseline */
 	dim_baseline_destroy_tree(&m->static_baseline);
 	dim_baseline_destroy_tree(&m->dynamic_baseline);
@@ -157,6 +163,7 @@ int dim_core_measure_blocking(void)
 	/* clean the running work */
 	flush_delayed_work(&dim_measure_work);
 	cancel_delayed_work_sync(&dim_measure_work);
+
 	/* queue and flush measure work */
 	queue_delayed_work(dim_work_queue, &dim_measure_work, 0);
 	flush_delayed_work(&dim_measure_work);

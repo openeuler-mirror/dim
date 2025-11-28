@@ -24,6 +24,11 @@ struct dim_entry {
 	struct dentry *dentry;
 };
 
+#ifndef THIS_MODULE
+#define THIS_MODULE NULL
+#endif
+
+
 /* the file interface for trigger by 'echo 1 > file_path' */
 #define dim_trigger_entry(sname, fname, function)			\
 static ssize_t sname##_trigger(struct file *file,			\
@@ -60,37 +65,37 @@ static struct dim_entry sname##_entry = {				\
 };
 
 /* the file interface for reading measure log */
-#define dim_measure_log_entry(sname, fname, root_ptr)			\
-static void *measure_log_read_start(struct seq_file *m, loff_t *pos)	\
+#define dim_measure_log_entry(sname, fname, root_ptr, format)		\
+static void *measure_log##format##_read_start(struct seq_file *m, loff_t *pos)	\
 {									\
 	read_lock(&(root_ptr)->lock);					\
 	return seq_list_start(&(root_ptr)->list_root, *pos);		\
 }									\
 									\
-static void *measure_log_read_next(struct seq_file *m,			\
+static void *measure_log##format##_read_next(struct seq_file *m,			\
 				   void *v, loff_t *pos)		\
 {									\
 	return seq_list_next(v, &(root_ptr)->list_root, pos);		\
 }									\
 									\
-static void measure_log_read_stop(struct seq_file *m, void *v)		\
+static void measure_log##format##_read_stop(struct seq_file *m, void *v)		\
 {									\
 	read_unlock(&(root_ptr)->lock);					\
 }									\
 									\
-static int measure_log_read_show(struct seq_file *m, void *v)		\
+static int measure_log##format##_read_show(struct seq_file *m, void *v)		\
 {									\
 	struct dim_measure_log *log =					\
 		list_entry(v, struct dim_measure_log, node_order);	\
 									\
-	return dim_measure_log_seq_show(m, log);			\
+	return dim_measure_log_seq_show_##format(m, log);		\
 }									\
 									\
 const struct seq_operations sname##_seqops = {				\
-	.start = measure_log_read_start,				\
-	.next = measure_log_read_next,					\
-	.stop = measure_log_read_stop,					\
-	.show = measure_log_read_show,					\
+	.start = measure_log##format##_read_start,				\
+	.next = measure_log##format##_read_next,					\
+	.stop = measure_log##format##_read_stop,					\
+	.show = measure_log##format##_read_show,					\
 };									\
 									\
 static int sname##_open(struct inode *inode, struct file *file)		\

@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
+#ifdef CONFIG_MODULES
 
 #include <linux/module.h>
 #include <linux/version.h>
@@ -114,3 +115,5 @@ struct dim_measure_task dim_core_measure_task_module_text = {
 	.destroy = NULL,
 	.measure = module_text_measure,
 };
+
+#endif

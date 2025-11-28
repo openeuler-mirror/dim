@@ -82,7 +82,7 @@ static bool vm_file_match_policy(struct file *vm_file,
 		return false;
 	}
 
-	if (ctx->mode == DIM_BASELINE)
+	if (ctx->mode == DIM_BASELINE || ctx->m->measure_only)
 		return dim_core_policy_match(DIM_POLICY_OBJ_BPRM_TEXT,
 					     DIM_POLICY_KEY_PATH, ctx->path);
 

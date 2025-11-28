@@ -30,6 +30,7 @@ static int dim_mem_pool_expand(unsigned int order)
 	ret = gen_pool_add(dim_pool, pages_addr, size, -1);
 	if (ret < 0) {
 		dim_err("failed to add pages to memory pool: %d\n", ret);
+		__free_pages(pages, order);
 		return ret;
 	}
 

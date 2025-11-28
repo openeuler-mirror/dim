@@ -9,10 +9,8 @@ static void call_measure_func(int mode, struct dim_measure_task *t,
 {
 	int ret = 0;
 	
-	if (t->measure == NULL) {
-		dim_warn("no measure function in %s task", t->name);
+	if (t->measure == NULL)
 		return;
-	}
 
 	dim_info("start to call %s measure task\n", t->name);
 	ret = t->measure(mode, m);
@@ -44,7 +42,7 @@ void dim_measure_task_measure(int mode, struct dim_measure *m)
 		MEASURE_STATUS_BASELINE_RUNNING :
 		MEASURE_STATUS_MEASURE_RUNNING);
 
-	if (mode == DIM_BASELINE && m->baseline_prepare != NULL) {
+	if (mode == DIM_BASELINE) {
 		ret = m->baseline_prepare(m);
 		if (ret < 0) {
 			atomic_set(&m->status, MEASURE_STATUS_ERROR);

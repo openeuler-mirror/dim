@@ -1,0 +1,22 @@
+config DIM_CORE
+	tristate "Dynamic Integrity Measurement (DIM) Core"
+	select SECURITYFS
+	select CRYPTO_SHA256
+	select CRYPTO_HASH_INFO
+	default y
+	help
+	  The Dynamic Integrity Measurement(DIM) Core maintains
+	  a list of hash values of code segment of executables
+	  files, as they are read only and executed. If an attacker
+	  manages to change the contents of the code segment in
+	  process, we can tell.
+	  If your system has a TPM chip, then DIM Core also maintains
+	  an aggregate integrity value over this list inside the
+	  TPM hardware.
+	  If unsure, say N.
+
+config DIM_CORE_SIGNATURE_SUPPORT
+	bool "Enable signature verification in DIM Core"
+	depends on DIM_CORE
+	default n
+	select ASYMMETRIC_KEY_TYPE

@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2023-2023. All rights reserved.
  */
 
+#include <linux/sched.h>
+
 #include "dim_measure.h"
 
 void dim_measure_schedule(struct dim_measure *m)

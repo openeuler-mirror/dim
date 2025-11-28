@@ -17,11 +17,6 @@ static int cfg_check(struct dim_measure_cfg *cfg)
 		return -ERANGE;
 	}
 
-	if (cfg->pcr > DIM_PCR_MAX) {
-		dim_err("invalid TPM pcr number: %d\n", cfg->pcr);
-		return -ERANGE;
-	}
-
 	return 0;
 }
 
@@ -41,35 +36,32 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 		goto err;
 	}
 
-	/* 2. init TPM, dont break if init fail */
-	if (cfg->pcr > 0) {
-		ret = dim_tpm_init(&m->tpm, HASH_ALGO_SHA256);
-		if (ret < 0) {
-			cfg->pcr = 0;
-			dim_warn("failed to init tpm chip: %d\n", ret);
-		}
-	} else {
-		memset(&m->tpm, 0, sizeof(struct dim_tpm));
-	}
+	/* 2. init RoT, dont break if init fail */
+	ret = dim_rot_init(cfg->rot, HASH_ALGO_SHA256, cfg->pcr);
+	if (ret < 0)
+		dim_warn("failed to init RoT device: %d\n", ret);
 
 	/* 3. init baseline data (static and dynamic) */
-	ret = dim_baseline_init_tree(cfg->sta_malloc, cfg->sta_free,
-				     &m->static_baseline);
-	if (ret < 0) {
-		dim_err("failed to init static baseline root: %d\n", ret);
-		goto err;
-	}
+	m->measure_only = cfg->measure_only;
+	/* for measure_only mode, no need to process baseline data */
+	if (!m->measure_only) {
+		ret = dim_baseline_init_tree(cfg->sta_malloc, cfg->sta_free,
+					     &m->static_baseline);
+		if (ret < 0) {
+			dim_err("failed to init static baseline: %d\n", ret);
+			goto err;
+		}
 
-	ret = dim_baseline_init_tree(cfg->dyn_malloc, cfg->dyn_free,
-				     &m->dynamic_baseline);
-	if (ret < 0) {
-		dim_err("failed to init dynamic baseline root: %d\n", ret);
-		goto err;
+		ret = dim_baseline_init_tree(cfg->dyn_malloc, cfg->dyn_free,
+					     &m->dynamic_baseline);
+		if (ret < 0) {
+			dim_err("failed to init dynamic baseline: %d\n", ret);
+			goto err;
+		}
 	}
 
 	/* 4. init measure log */
-	ret = dim_measure_log_init_tree(&m->log, &m->hash, &m->tpm,
-					cfg->log_cap, cfg->pcr);
+	ret = dim_measure_log_init_tree(&m->log, &m->hash, cfg->log_cap);
 	if (ret < 0) {
 		dim_err("failed to init measure log: %d\n", ret);
 		goto err;
@@ -81,6 +73,7 @@ int dim_measure_init(struct dim_measure *m, struct dim_measure_cfg *cfg)
 
 	/* 6. set initial status */
 	atomic_set(&m->status, MEASURE_STATUS_NO_BASELINE);
+
 	return 0;
 err:
 	dim_measure_destroy(m);
@@ -97,7 +90,7 @@ void dim_measure_destroy(struct dim_measure *m)
 	dim_measure_log_destroy_tree(&m->log);
 	dim_baseline_destroy_tree(&m->static_baseline);
 	dim_baseline_destroy_tree(&m->dynamic_baseline);
-	dim_tpm_destroy(&m->tpm);
+	dim_rot_destroy();
 	dim_hash_destroy(&m->hash);
 	mutex_unlock(&m->measure_lock);
 }

@@ -5,9 +5,11 @@
 #include <linux/seq_file.h>
 
 #include "dim_rb.h"
-#include "dim_tpm.h"
+#include "dim_rot.h"
 #include "dim_safe_func.h"
 #include "dim_measure_log.h"
+
+#define DIM_TEMPLATE "ima-ng"
 
 /*
 static int dim_measure_name_rb_add(struct rb_root *root,
@@ -57,7 +59,65 @@ static int cal_measure_log_digest(const char *name,
 	return crypto_shash_final(shash, info->log_digest.data);
 }
 
-int dim_measure_log_seq_show(struct seq_file *m, struct dim_measure_log *info)
+static void dim_putc(struct seq_file *m, const void *data, int datelen)
+{
+	while (datelen--)
+		seq_putc(m, *(char *)data++);
+}
+
+int dim_measure_log_seq_show_binary(struct seq_file *m,
+				    struct dim_measure_log *info)
+{
+	u32 pcr, len, name_len, digest_len;
+	char digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
+	const char *name = NULL;
+
+	/* Print slot index */
+	pcr = dim_rot_slot();
+	dim_putc(m, &pcr, sizeof(pcr));
+
+	/* template digest
+	 * Note: This length does not match the actual value. It is currently
+	 * specified as SHA1 for compatibility with some remote attestation
+	 * tools. However, the digest value of the measurement log is not
+	 * actually used in the attestation.
+	 * */
+	dim_putc(m, &info->log_digest.data, dim_digest_size(HASH_ALGO_SHA1));
+
+ 	/* template name */
+	len = strlen(DIM_TEMPLATE);
+	dim_putc(m, &len, sizeof(len));
+	dim_putc(m, DIM_TEMPLATE, len);
+
+	/* calculate the length of rest data */
+	digest_len = strlen(dim_hash_name(info->log_digest.algo)) + \
+		     strlen(":") + 1 + \
+		     dim_digest_size(info->log_digest.algo);
+
+	name = dim_measure_log_name(info);
+	name_len = strlen(name) + 1;
+	len = digest_len + name_len + sizeof(name_len) + sizeof(digest_len);
+
+	/* print len */
+	dim_putc(m, &len, sizeof(len));
+	/* digest buf*/
+	strcat(digest_buf, dim_hash_name(info->digest.algo));
+	strcat(digest_buf, ":");
+	strncpy(digest_buf + strlen(digest_buf) + 1, info->digest.data, dim_digest_size(info->log_digest.algo));
+	dim_putc(m, &digest_len, sizeof(digest_len));
+	dim_putc(m, digest_buf, digest_len);
+
+	/* measure log name */
+	dim_putc(m, &name_len, sizeof(name_len));
+	dim_putc(m, name, name_len);
+
+	/* to do list: measure log type*/
+
+	return 0;
+}
+
+int dim_measure_log_seq_show_ascii(struct seq_file *m,
+				   struct dim_measure_log *info)
 {
 	char log_digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
 	char digest_buf[(DIM_MAX_DIGEST_SIZE << 1) + 1] = { 0 };
@@ -68,13 +128,21 @@ int dim_measure_log_seq_show(struct seq_file *m, struct dim_measure_log *info)
 	bin2hex(digest_buf, info->digest.data,
 		dim_digest_size(info->digest.algo));
 
-	seq_printf(m, "%d %s %s:%s %s %s\n",
-		   info->pcr,
+	seq_printf(m, "%d %s %s %s:%s %s",
+		   dim_rot_slot(),
 		   log_digest_buf,
+		   DIM_TEMPLATE,
 		   dim_hash_name(info->digest.algo),
 		   digest_buf,
-		   dim_measure_log_name(info),
-		   dim_measure_log_type_to_name(info->type));
+		   dim_measure_log_name(info));
+
+	/* Print the log flag */
+	if (info->type == LOC_MEASURE)
+		seq_printf(m, "\n");
+	else
+		seq_printf(m, " %s\n",
+			   dim_measure_log_type_to_name(info->type));
+
 	return 0;
 }
 
@@ -143,8 +211,8 @@ static int measure_log_create_name(const char *name_str,
 	return 0;
 }
 
-static int measure_log_create_info(char pcr, struct dim_digest *digest,
-				   int flag, struct dim_measure_log **info)
+static int measure_log_create_info(struct dim_digest *digest, int flag,
+				   struct dim_measure_log **info)
 {
 	int ret = 0;
 	struct dim_measure_log *new = NULL;
@@ -153,7 +221,6 @@ static int measure_log_create_info(char pcr, struct dim_digest *digest,
 	if (new == NULL)
 		return -ENOMEM;
 
-	new->pcr = pcr;
 	new->type = flag;
 	ret = dim_digest_copy(&new->digest, digest);
 	if (ret < 0) {
@@ -204,9 +271,7 @@ static int measure_log_add_info(struct dim_measure_log_tree *root,
 	root->count++;
 	write_unlock(&root->lock);
 
-	return root->tpm == NULL && root->pcr != 0 ? 0 :
-		dim_tpm_pcr_extend(root->tpm, root->pcr,
-				   &info->log_digest);
+	return dim_rot_extend(&info->log_digest);
 }
 
 static bool measure_log_is_full(struct dim_measure_log_tree *root)
@@ -233,7 +298,7 @@ int dim_measure_log_add(struct dim_measure_log_tree *root,
 	if (measure_log_is_full(root))
 		return -ENOSPC;
 
-	ret = measure_log_create_info(root->pcr, digest, flag, &info);
+	ret = measure_log_create_info(digest, flag, &info);
 	if (ret < 0)
 		return ret;
 
@@ -271,11 +336,27 @@ void dim_measure_log_destroy_tree(struct dim_measure_log_tree *root)
 	write_unlock(&root->lock);
 }
 
+static int calc_boot_aggregate(struct dim_measure_log_tree *root)
+{
+	int ret = 0;
+	struct dim_digest boot_aggregate = {
+		.algo = root->hash->algo,
+	};
+
+	ret = dim_calc_boot_aggregate(&boot_aggregate, root->hash);
+	if (ret < 0)
+		dim_warn("Failed to calculate boot_aggregate: %d\n", ret);
+
+	ret = dim_measure_log_add(root, "boot_aggregate",
+				  &boot_aggregate, LOC_MEASURE);
+	if (ret < 0)
+		dim_warn("Failed to add boot_aggregate log: %d\n", ret);
+
+	return 0;
+}
+
 int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
-			      struct dim_hash *hash, 
-			      struct dim_tpm *tpm,
-			      unsigned int cap,
-			      unsigned int pcr)
+			      struct dim_hash *hash, unsigned int cap)
 {
 	if (root == NULL || hash == NULL)
 		return -EINVAL;
@@ -284,8 +365,7 @@ int dim_measure_log_init_tree(struct dim_measure_log_tree *root,
 	INIT_LIST_HEAD(&root->list_root);
 	root->hash = hash;
 	root->rb_root = RB_ROOT;
-	root->pcr = pcr;
-	root->tpm = tpm;
 	root->cap = cap;
-	return 0;
+
+	return calc_boot_aggregate(root);
 }

@@ -32,8 +32,21 @@ dim_trigger_entry(dim_baseline_init, baseline_init,
  * file entry name: runtime_status
  * status to read: dim_measure_log_tree
  */
-dim_measure_log_entry(dim_measure_log, ascii_runtime_measurements,
-		      &dim_core_handle.log);
+dim_measure_log_entry(dim_measure_log,
+		      ascii_runtime_measurements,
+		      &dim_core_handle.log,
+		      ascii);
+
+/*
+ * binary measure log read interface
+ * dim_entry struct: dim_measure_log_entry
+ * file entry name: runtime_status
+ * status to read: dim_measure_log_tree
+ */
+dim_measure_log_entry(dim_measure_log_binary,
+		      binary_runtime_measurements,
+		      &dim_core_handle.log,
+		      binary);
 
 /*
  * status print interface
@@ -77,6 +90,7 @@ static struct dim_entry *dim_core_files[] = {
 	&dim_measure_entry,
 	&dim_baseline_init_entry,
 	&dim_measure_log_entry,
+	&dim_measure_log_binary_entry,
 	&dim_status_entry,
 	&dim_interval_entry,
 	&dim_tampered_action_entry,

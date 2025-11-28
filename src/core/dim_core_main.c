@@ -11,7 +11,9 @@
 #include "dim_core_fs.h"
 #include "dim_core_measure.h"
 #include "dim_core_mem_pool.h"
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 #include "dim_core_sig.h"
+#endif
 
 /* common measurement configuration */
 static struct dim_measure_cfg cfg = {
@@ -19,27 +21,66 @@ static struct dim_measure_cfg cfg = {
 	.log_cap = DIM_CORE_LOG_CAP_DEFAULT,
 };
 
+#ifdef MODULE
 module_param_named(measure_log_capacity, cfg.log_cap, uint, 0);
 MODULE_PARM_DESC(measure_log_capacity, "Max number of measure log");
+#else
+core_param(dim_measure_log_capacity, cfg.log_cap, uint, 0);
+#endif
 
+#ifdef MODULE
 module_param_named(measure_schedule, cfg.schedule_ms, uint, 0);
 MODULE_PARM_DESC(measure_schedule, "Schedule time (ms) for each measure object");
+#else
+core_param(dim_measure_schedule, cfg.schedule_ms, uint, 0);
+#endif
 
+#ifdef MODULE
 module_param_named(measure_hash, cfg.alg_name, charp, 0);
 MODULE_PARM_DESC(measure_hash, "Hash algorithm for measurement");
+#else
+core_param(dim_measure_hash, cfg.alg_name, charp, 0);
+#endif
 
+#ifdef MODULE
 module_param_named(measure_pcr, cfg.pcr, uint, 0);
 MODULE_PARM_DESC(measure_pcr, "TPM PCR index to extend measure log");
+#else
+core_param(dim_measure_pcr, cfg.pcr, uint, 0);
+#endif
+
+#ifdef MODULE
+module_param_named(measure_rot, cfg.rot, charp, 0);
+MODULE_PARM_DESC(measure_rot, "Rot device to extend measure log");
+#else
+core_param(dim_measure_rot, cfg.rot, charp, 0);
+#endif
+
+#ifdef MODULE
+module_param_named(measure_only, cfg.measure_only, bool, 0);
+MODULE_PARM_DESC(measure_only, "Only do measurement, no verification");
+#else
+core_param(dim_measure_only, cfg.measure_only, bool, 0);
+#endif
 
 /* special measurement configuration for dim_core */
 static unsigned int measure_interval = 0;
-static bool signature = false;
-
+#ifdef MODULE
 module_param(measure_interval, uint, 0);
 MODULE_PARM_DESC(measure_interval, "Interval time (min) for automatic measurement");
+#else
+core_param(dim_measure_interval, measure_interval, uint, 0);
+#endif
 
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
+static bool signature = false;
+ #ifdef MODULE
 module_param(signature, bool, 0);
 MODULE_PARM_DESC(signature, "Require signature for policy and static baseline");
+ #else
+core_param(dim_signature, signature, bool, 0);
+ #endif
+#endif
 
 static int __init dim_core_init(void)
 {
@@ -56,7 +97,7 @@ static int __init dim_core_init(void)
 		dim_err("failed to initialize dim memory pool: %d\n", ret);
 		goto err;
 	}
-
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature) {
 		ret = dim_core_sig_init();
 		if (ret < 0) {
@@ -64,7 +105,7 @@ static int __init dim_core_init(void)
 			goto err;
 		}
 	}
-
+#endif
 	ret = dim_core_measure_init(&cfg, measure_interval);
 	if (ret < 0) {
 		dim_err("failed to initialize dim measurement: %d\n", ret);
@@ -82,10 +123,10 @@ err:
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
-
+#endif
 	return ret;
 }
 
@@ -94,9 +135,10 @@ static void __exit dim_core_exit(void)
 	dim_core_destroy_fs();
 	dim_core_measure_destroy();
 	dim_mem_pool_destroy();
-
+#ifdef CONFIG_DIM_CORE_SIGNATURE_SUPPORT
 	if (signature)
 		dim_core_sig_destroy();
+#endif
 
 #ifdef DIM_DEBUG_MEMORY_LEAK
 	dim_check_memory_leak();
