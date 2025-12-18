@@ -140,7 +140,7 @@ echo 1 > /sys/kernel/security/dim/measure
 
 ### 4.2 使用dim_core组件度量用户态程序代码段，仅进行度量不进行本地基线比对（用于远程证明场景）
 
-**(1) 插入dim_core模块 **
+**(1) 插入dim_core模块**
 ```
 insmod dim_core.ko measure_only=1
 ```
