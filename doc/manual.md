@@ -14,7 +14,7 @@
 
 ## 2 术语名词
 
-静态基线：针对度量目标的二进制文件进行解析所生成的度量基准数据；
+静态基线：针对度量目标的二进制文件进行解析所生成的度量基准数据；dim自身支持比对静态基线，用户也可将基线比对逻辑放在远程证明服务中。
 
 动态基线：针对度量目标执行首次度量的结果；
 
@@ -33,8 +33,9 @@ DIM特性通过在程序运行时对内存中的关键数据（如代码段、�
   - 用户态进程的代码段：对应ELF文件中属性为PT_LOAD、权限为RX的段，对应进程加载后权限为RX的vma区域；
   - 内核模块代码段：起始地址为内核模块对应struct module结构体中的core_layout.base，长度为core_layout.text_size；
   - 内核代码段：对应\_stext符号至\_etext，跳过可能由于内核static key机制发生变化的地址。
-- 当前DIM特性支持对接以下硬件平台：
-  - 支持将度量结果扩展至TPM 2.0芯片的PCR寄存器，以实现远程证明服务对接。
+- 当前DIM特性支持对接以下硬件平台，以实现远程证明服务对接：
+  - 支持将度量结果扩展至TPM 2.0芯片的PCR寄存器。
+  - 支持将度量结果扩展至virtcca的PCR寄存器
 
 ### 1.2 技术限制
 
@@ -44,7 +45,7 @@ DIM特性通过在程序运行时对内存中的关键数据（如代码段、�
 - 对于主动修改代码段的场景（如代码段重定位、自修改或热补丁），会被识别为攻击；
 - 对于内核、内核模块的度量，以触发动态基线时的度量结果作为度量基准值，静态基线值仅作为一个固定标识；
 - 度量目标必须在触发动态基线的时刻就已在内存中加载（如进程运行或内核模块加载），否则后续无法度量；
-- 在需要使用TPM芯片的PCR寄存器验证度量日志的场景下，DIM模块不允许卸载，否则会导致度量日志清空，而无法和PCR寄存器匹配；
+- 在需要使用可信芯片（如tpm/virtcca等）的PCR寄存器验证度量日志的场景下，DIM模块不允许卸载，否则会导致度量日志清空，而无法和PCR寄存器匹配；
 >![](./pic/icon-note.gif) **说明：**
 >
 >特性启用后，会对系统性能存在一定影响，主要包括以下方面：
@@ -162,10 +163,15 @@ dim KERNEL sha256:2ce2bc5d65e112ba691c6ab46d622fac1b7dbe45b77106631120dcc5441a3b
 
 ##### 1.3.2.3 度量日志格式说明
 
-文本内容，以UNIX换行符进行分隔，每行代表一条度量日志，格式为：
+文本内容，以UNIX换行符进行分隔，每行代表一条度量日志，根据是否进行基线值比对，格式为为两种：
+1. 进行基线值比对
 
 ```
 <PCR寄存器编号> <度量日志哈希值> <度量算法>:<度量哈希值> <度量对象> <度量日志类型>
+```
+2. 对接远程证明服务，dim不进行基线值比对，度量模板当前仅支持ima-ng，格式与完整性保护（IMA）保持一致，因此可复用远程证明中IMA的验证流程。
+```
+<PCR寄存器编号> <度量日志哈希值> <度量模板> <度量算法>:<度量哈希值> <度量对象>
 ```
 
 **参考示例：**
@@ -194,7 +200,10 @@ dim KERNEL sha256:2ce2bc5d65e112ba691c6ab46d622fac1b7dbe45b77106631120dcc5441a3b
    12 660d594ba050c3ec9a7cdc8cf226c5213c1e6eec50ba3ff51ff76e4273b3335a sha256:bdab94a05cc9f3ad36d29ebbd14aba8f6fd87c22ae580670d18154b684de366c dim_core.text [dynamic baseline]
    12 28a3cefc364c46caffca71e7c88d42cf3735516dec32796e4883edcf1241a7ea sha256:0dfd9656d6ecdadc8ec054a66e9ff0c746d946d67d932cd1cdb69780ccad6fb2 dim_core.data [dynamic baseline]
    ```
-
+5. 对bash进程代码段执行度量，dim不进行静态基线值比对(用于远程证明场景)：
+   ```
+   4 0f384a6d24e121daf06532f808df624d5ffc061e20166976e89a7bb24158eb87 ima-ng sha256:db032449f9e20ba37e0ec4a506d664f24f496bce95f2ed972419397951a3792e /usr/bin/bash
+   ```
 ##### 1.3.2.1 证书/签名文件格式说明
 
 为通用格式，详见**3.7 开启签名校验**章节。
@@ -209,7 +218,9 @@ dim KERNEL sha256:2ce2bc5d65e112ba691c6ab46d622fac1b7dbe45b77106631120dcc5441a3b
 | measure_schedule     | 度量完一个进程/模块后调度的时间，单位毫秒，设置为0代表不调度 | 0-1000                   | 0      |
 | measure_interval     | 自动度量周期，单位分钟，设置为0代表不设置自动度量            | 0-525600                 | 0      |
 | measure_hash         | 度量哈希算法                                                 | sha256, sm3              | sha256 |
-| measure_pcr          | 将度量结果扩展至TPM芯片的PCR寄存器，设置为0代表不扩展（注意需要与芯片实际的PCR编号保持一致） | 0-128                    | 0      |
+| measure_pcr          | 将度量结果扩展至可信芯片的PCR寄存器，设置为0代表不扩展 | 与可信芯片的PCR编号保持一致                    | 0      |
+| measure_only         | 仅记录度量hash，不进行静态基线文件比对(用于远程证明场景)，设置为0代表不启用，设置为1代表启用   | 0, 1                     | 0      |
+| measure_rot          | 度量日志扩展的可信根芯片，当前仅支持virtcca以及tpm   | tpm, virtcca                    | tpm      |
 | signature            | 是否启用策略文件和签名机制，设置为0代表不启用，设置为1代表启用   | 0, 1                     | 0      |
 
 **使用示例**：
@@ -217,6 +228,7 @@ dim KERNEL sha256:2ce2bc5d65e112ba691c6ab46d622fac1b7dbe45b77106631120dcc5441a3b
 ```
 insmod /path/to/dim_core.ko measure_log_capacity=10000 measure_schedule=10 measure_pcr=12
 modprobe dim_core measure_log_capacity=10000 measure_schedule=10 measure_pcr=12
+modprobe dim_core measure_only=1 measure_rot=virtcca
 ```
 
 ##### 1.3.3.2 dim_monitor模块参数
@@ -225,7 +237,8 @@ modprobe dim_core measure_log_capacity=10000 measure_schedule=10 measure_pcr=12
 | -------------------- | ------------------------------------------------------------ | ------------------------ | ------ |
 | measure_log_capacity | 度量日志最大条数，当dim_monitor记录的度量日志数量达到参数设置时，停止记录度量日志 | 100-UINT_MAX（64位系统） | 100000 |
 | measure_hash         | 度量哈希算法                                                 | sha256, sm3              | sha256 |
-| measure_pcr          | 将度量结果扩展至TPM芯片的PCR寄存器，设置为0代表不扩展        | 0-128                    | 0      |
+| measure_pcr          | 将度量结果扩展至可信芯片的PCR寄存器，设置为0代表不扩展        | 与可信芯片的PCR编号保持一致                  | 0      |
+| measure_rot          | 度量日志扩展的可信芯片，当前仅支持virtcca以及tpm   | tpm, virtcca                    | tpm      |
 
 **使用示例**：
 
@@ -243,6 +256,7 @@ modprobe dim_monitor measure_log_capacity=10000 measure_hash=sm3
 | measure                    | 只写 | 写入字符串1触发动态度量，成功返回0，失败返回错误码           | echo 1 >  /sys/kernel/security/dim/measure                |
 | baseline_init              | 只写 | 写入字符串1触发动态基线，成功返回0，失败返回错误码           | echo 1 >  /sys/kernel/security/dim/baseline_init          |
 | ascii_runtime_measurements | 只读 | 读取接口查询度量日志                                         | cat  /sys/kernel/security/dim/ ascii_runtime_measurements |
+| binary_runtime_measurements | 只读 | 读取接口查询度量二进制日志                                         | xxd  /sys/kernel/security/dim/binary_runtime_measurements |
 | runtime_status             | 只读 | 读取接口返回状态类型信息，失败返回错误码                     | cat  /sys/kernel/security/dim/runtime_status              |
 | interval                   | 读写 | 写入数字字符串设置自动度量周期（范围同measure_interval参数），读取接口查询当前自动度量周期。失败返回错误码 | echo 10 >  /sys/kernel/security/dim/interval              |
 
