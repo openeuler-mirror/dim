@@ -49,7 +49,7 @@ static struct vm_area_struct *next_file_text_vma(struct vm_area_struct *vma)
 }
 
 /* For file text segment, merge all file mapping text vma and measure */
-int measure_text_vma(struct vm_area_struct *vma, struct task_measure_ctx *ctx)
+static int measure_text_vma(struct vm_area_struct *vma, struct task_measure_ctx *ctx)
 {
 	int ret = 0;
 	struct vm_area_struct *v = vma;
