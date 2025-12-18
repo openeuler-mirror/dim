@@ -138,7 +138,37 @@ echo 1 > /sys/kernel/security/dim/measure
 
 度量完成后可通过步骤(5)查询度量日志，如果度量结果和动态基线阶段的度量结果一致，则度量日志不会更新，否则会新增异常度量日志。
 
-### 4.1 使用dim_monitor组件度量dim_core组件
+### 4.2 使用dim_core组件度量用户态程序代码段，仅进行度量不进行本地基线比对（用于远程证明场景）
+
+**(1) 插入dim_core模块 **
+```
+insmod dim_core.ko measure_only=1
+```
+
+**(2) 配置度量策略：**
+
+以度量bash进程为例：
+
+```
+echo "measure obj=BPRM_TEXT path=/usr/bin/bash" > /etc/dim/policy
+```
+
+**(3) 执行度量：**
+
+执行动态基线完成后，可通过如下命令多次触发动态度量：
+
+```
+echo 1 > /sys/kernel/security/dim/measure
+```
+**(4) 查询度量日志：**
+
+```
+# cat /sys/kernel/security/dim/ascii_runtime_measurements 
+0 ea5b0e54ae55bc9bd140b4fc679dde6ffcba77b22973dcb17b1e5c3e89531db4 ima-ng sha256:ad86c3bd36900c33e8ce09ec82266636a4d1f60300f7cb913058fba8ec99aa45 /usr/bin/bash
+```
+如果度量结果发生变化，则会新增异常度量日志。
+
+### 4.3 使用dim_monitor组件度量dim_core组件
 
 **(1) 前置条件**
 
